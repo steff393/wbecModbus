@@ -32,3 +32,8 @@ Register 30865: 7890
 Register 30866: 23
 Server 192.168.178.94, Port 502 erfolgreich ausgelesen
 ```
+
+## Download
+Folgende Dateien müssen im gleichen Ordner gespeichert werden:  
+[wbecModbus.exe](https://github.com/steff393/wbecModbus/releases/latest/download/wbecModbus.exe)  
+[cfg.ini](https://github.com/steff393/wbecModbus/releases/latest/download/cfg.ini)  
