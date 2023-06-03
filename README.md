@@ -6,25 +6,29 @@ wbecModbus ist ein Tool für den PC.
 [wbec Homepage](https://steff393.github.io/wbec-site/)  
 
 ## Konfiguration
-Die Einstellung der Parameter erfolgt über die Datei cfg.ini  
+Die Einstellung der Parameter erfolgt über die Datei `cfg.ini`.  
+Der Aufruf kann dann einfach per Doppelklick auf `wbecModbus.exe` erfolgen.    
 
+Die wesentlichen Parameter (IP-Adresse und Typ) können alternativ auch über die Kommandozeile übergeben werden:  
+```
+wbecModbus.exe <IP-Adresse> <SolarEdge | Fronius | Kostal_mit_KSEM | Huawei | SMA | Victron | E3DC | Kostal_Plenticore>
+```
 
 ## Beispiel
-
 ```
-C:\Users\user>wbecModbus.exe
+C:\Users\user>wbecModbus.exe 192.168.178.94 SMA
 
 wbec Modbus-TCP-Kompatibilitätsprüfung
-cfgInverterIp:     192.168.178.94
-cfgInverterPort:   502
-cfgInverterAddr:   1
-cfgInverterType:   1
-register:          30810
-registerCount:     4
+Übernehme IP und Typ aus Aufrufparametern...
+IP   : 192.168.178.94
+Typ  : SMA
+Port : 502
+Addr : 1
 ...bitte warten...
-Verbindung erfolgreich, Registerwerte:
-Register 30810: 30810
-Register 30811: 30811
-Register 30812: 30812
-Register 30813: 30813
+Registerwerte:
+Register 30867: 1234
+Register 30868: 56
+Register 30865: 7890
+Register 30866: 23
+Server 192.168.178.94, Port 502 erfolgreich ausgelesen
 ```
