@@ -4,43 +4,35 @@
 from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ConnectionException
 import configparser
+import sys
 
 print("wbec Modbus-TCP-Kompatibilitätsprüfung")
 
 config = configparser.ConfigParser()
 config.read('cfg.ini')
 
-cfgInverterIp        = config.get('Section 1', 'cfgInverterIp')
-cfgInverterPort      = config.get('Section 1', 'cfgInverterPort')
-cfgInverterAddr      = config.get('Section 1', 'cfgInverterAddr')
-cfgInverterType      = config.get('Section 1', 'cfgInverterType')
+cfg = config['Section 1']
 
-cfgRegister          = config.get('Section 2', 'register')
-cfgRegisterCount     = config.get('Section 2', 'registerCount')
-
-print("cfgInverterIp:     " + cfgInverterIp)
-print("cfgInverterPort:   " + cfgInverterPort)
-print("cfgInverterAddr:   " + cfgInverterAddr)
-print("cfgInverterType:   " + cfgInverterType)
-print("register:          " + cfgRegister)
-print("registerCount:     " + cfgRegisterCount)
+for key in config['Section 1']:
+	print(key.ljust(18) + ": " + config['Section 1'][key])
 print("...bitte warten...")
 
 try:
-	client = ModbusTcpClient(cfgInverterIp, port=cfgInverterPort)
+	client = ModbusTcpClient(cfg['cfgInverterIp'], port=cfg['cfgInverterPort'])
 	client.connect()
+	print("Registerwerte:")
+	for key in config['Register']:
+		response = client.read_holding_registers(int(key), int(config['Register'][key]), slave=int(cfg['cfgInverterAddr']), unit=0x01)
 
-	response = client.read_holding_registers(int(cfgRegister), int(cfgRegisterCount), unit=0x01)
-
-	# Check if reading was successful
-	if response.isError():
-		print("Fehler: ", response)
-	else:
-		print("Verbindung erfolgreich, Registerwerte:")
-		for i, register_value in enumerate(response.registers):
-			print(f"Register {int(cfgRegister) + i}: {register_value}")
+		# Check if reading was successful
+		if response.isError():
+			print(f"Register {int(key) + i}: Fehler: ", response)
+		else:
+			for i, register_value in enumerate(response.registers):
+				print(f"Register {int(key) + i}: {register_value}")
 
 	client.close()
-	
+
 except ConnectionException:
-	print("Fehler: Server " + cfgInverterIp + ", Port " + cfgInverterPort + " nicht erreichbar")
+	print("Fehler: Server " + cfg['cfgInverterIp'] + ", Port " + cfg['cfgInverterPort'] + " nicht erreichbar")
+
