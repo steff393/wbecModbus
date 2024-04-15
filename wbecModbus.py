@@ -37,6 +37,7 @@ try:
 			continue  # If key doesn't contains a register number, then skip it
 		
 		response = client.read_holding_registers(int(key), int(config[modbusTyp][key]), slave=int(config[modbusTyp]['Addr']), unit=0x01)
+		# response = client.read_input_registers(int(key), int(config[modbusTyp][key]), slave=int(config[modbusTyp]['Addr']), unit=0x01)
 
 		# Check if reading was successful
 		if response.isError():
