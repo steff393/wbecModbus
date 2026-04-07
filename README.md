@@ -11,7 +11,7 @@ Der Aufruf kann dann einfach per Doppelklick auf `wbecModbus.exe` erfolgen.
 
 Die wesentlichen Parameter (IP-Adresse und Typ) können alternativ auch über die Kommandozeile übergeben werden:  
 ```
-wbecModbus.exe <IP-Adresse> <SolarEdge | Fronius | Kostal_mit_KSEM | Huawei | SMA | Victron | E3DC | Kostal_Plenticore>
+wbecModbus.exe <IP-Adresse> <SolarEdge | Fronius | Kostal_mit_KSEM | Huawei | SMA | Victron | E3DC | Kostal_Plenticore | FroniusFloat | SAX | GoodWe1 | Sungrow | AlphaESS | GoodWe2 | SolarLog>
 ```
 
 ## Beispiel
