@@ -1,214 +1,130 @@
 <!DOCTYPE html>
 <html lang="de">
-
 <head>
-
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Modbus Explorer</title>
-
-<link rel="stylesheet" href="style.css">
-
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Modbus Explorer</title>
+	<link rel="stylesheet" href="style.css">
 </head>
-
 
 <body>
 
 <h1>Modbus Explorer</h1>
 
-
 <div class="box">
-
-<h2>Verbindung</h2>
-
-
-<label>
-IP-Adresse
-
-<input id="ip" value="192.168.178.63">
-
-</label>
-
-
-<label>
-Port
-
-<input id="port" value="502">
-
-</label>
-
-
-<label>
-Unit ID
-
-<input id="unit" value="247">
-
-</label>
-
-
-<label>
-Function
-
-<select id="function">
-
-<option value="3">
-Holding Register (FC03)
-</option>
-
-<option value="4">
-Input Register (FC04)
-</option>
-
-</select>
-
-</label>
-
-
-</div>
-
-
-
-<div class="box">
-
-<h2>Lesen</h2>
-
-
-<label>
-Startregister
-
-<input id="start" value="35000">
-
-</label>
-
-
-<label>
-Anzahl
-
-<input id="count" value="20">
-
-</label>
-
-
-<button onclick="readRegisters()">
-Lesen
-</button>
-
-
-</div>
-
-
-
-<div class="box">
-
-<h2>Scan</h2>
-
-
-<label>
-Von
-
-<input id="scanFrom" value="30000">
-
-</label>
-
-
-<label>
-Bis
-
-<input id="scanTo" value="31000">
-
-</label>
-
-
-<button onclick="scanRegisters()">
-Scan starten
-</button>
-
-
-</div>
-
-<div class="box">
-
-<h2>Suche</h2>
-
-
-<label>
-
-Wert
-
-<input id="searchValue" value="230">
-
-</label>
-
-
-<button onclick="searchRegisters()">
-Suchen
-</button>
-
-
+	<h2>Verbindung</h2>
+
+	<label>
+		IP-Adresse
+		<input id="ip" value="192.168.178.63">
+	</label>
+
+	<label>
+		Port
+		<input id="port" value="502">
+	</label>
+
+	<label>
+		Unit ID
+		<input id="unit" value="247">
+	</label>
+
+	<label>
+		Function
+		<select id="function">
+			<option value="3">Holding Register (FC03)</option>
+			<option value="4">Input Register (FC04)</option>
+		</select>
+	</label>
 </div>
 
 
 <div class="box">
+	<h2>Register lesen</h2>
 
-<table>
+	<label>
+		Start
+		<input id="start" value="35000">
+	</label>
 
-<thead>
+	<label>
+		Anzahl
+		<input id="count" value="20">
+	</label>
 
-<tr>
-
-<th>Adresse</th>
-<th>Typ</th>
-<th>Wert</th>
-
-</tr>
-
-</thead>
-
-<tbody id="searchTable">
-
-</tbody>
-
-</table>
-
+	<button onclick="readRegisters()">Lesen</button>
 </div>
 
+
 <div class="box">
+	<h2>Register Scan</h2>
 
-<table>
+	<label>
+		Von
+		<input id="scanFrom" value="30000">
+	</label>
 
+	<label>
+		Bis
+		<input id="scanTo" value="31000">
+	</label>
 
-<thead>
-
-<tr>
-
-<th>Adresse</th>
-<th>Hex</th>
-<th>uint16</th>
-<th>int16</th>
-<th>uint32 BE</th>
-<th>uint32 LE</th>
-<th>float BE</th>
-<th>float LE</th>
-
-</tr>
-
-</thead>
+	<button onclick="scanRegisters()">Scan starten</button>
+</div>
 
 
-<tbody id="table">
+<div class="box">
+	<h2>Suche</h2>
 
-</tbody>
+	<label>
+		Wert
+		<input id="searchValue" value="230">
+	</label>
+
+	<button onclick="searchRegisters()">Suchen</button>
+</div>
 
 
-</table>
+<div class="box">
+	<h2>Registerwerte</h2>
 
+	<table>
+		<thead>
+			<tr>
+				<th>Adresse</th>
+				<th>Hex</th>
+				<th>uint16</th>
+				<th>int16</th>
+				<th>uint32 BE</th>
+				<th>uint32 LE</th>
+				<th>float BE</th>
+				<th>float LE</th>
+			</tr>
+		</thead>
+
+		<tbody id="table"></tbody>
+	</table>
+</div>
+
+
+<div class="box">
+	<h2>Suchergebnisse</h2>
+
+	<table>
+		<thead>
+			<tr>
+				<th>Adresse</th>
+				<th>Typ</th>
+				<th>Wert</th>
+			</tr>
+		</thead>
+
+		<tbody id="searchTable"></tbody>
+	</table>
 </div>
 
 
 <script src="app.js"></script>
 
-
 </body>
-
 </html>

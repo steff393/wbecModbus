@@ -1,99 +1,53 @@
 body {
-
-	font-family:
-	Arial,
-	sans-serif;
-
-	background:#f4f5f7;
-
-	margin:30px;
-
+	font-family: Arial, sans-serif;
+	background: #f4f5f7;
+	margin: 30px;
 }
-
-
 
 h1 {
-
-	color:#333;
-
+	color: #333;
 }
 
-
+h2 {
+	margin-top: 0;
+	font-size: 18px;
+}
 
 .box {
-
-	background:white;
-
-	padding:20px;
-
-	margin-bottom:20px;
-
-	border-radius:8px;
-
+	background: white;
+	padding: 20px;
+	margin-bottom: 20px;
+	border-radius: 8px;
 }
-
-
 
 label {
-
-	display:block;
-
-	margin-bottom:12px;
-
+	display: block;
+	margin-bottom: 12px;
 }
 
-
-
-input,
-select {
-
-	padding:6px;
-
-	margin-left:10px;
-
-	width:150px;
-
+input, select {
+	padding: 6px;
+	width: 160px;
+	margin-left: 10px;
 }
-
-
 
 button {
-
-	padding:10px 20px;
-
-	cursor:pointer;
-
+	padding: 10px 20px;
+	cursor: pointer;
 }
-
-
 
 table {
-
-	border-collapse:collapse;
-
-	width:100%;
-
-	font-size:14px;
-
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 14px;
 }
 
-
-
-th,
-td {
-
-	border:1px solid #ccc;
-
-	padding:6px;
-
-	text-align:right;
-
+th, td {
+	border: 1px solid #ccc;
+	padding: 6px;
+	text-align: right;
 }
-
-
 
 th {
-
-	background:#eee;
-
+	background: #eee;
 }

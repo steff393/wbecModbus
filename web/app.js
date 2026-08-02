@@ -1,559 +1,241 @@
-function getSettings()
-{
+let registers = {};
 
+function getConfig() {
 	return {
-
-		ip:
-		document.getElementById("ip").value,
-
-		port:
-		Number(
-			document.getElementById("port").value
-		),
-
-		unit:
-		Number(
-			document.getElementById("unit").value
-		),
-
-		function:
-		Number(
-			document.getElementById("function").value
-		)
-
+		ip: document.getElementById("ip").value,
+		port: Number(document.getElementById("port").value),
+		unit: Number(document.getElementById("unit").value),
+		function: Number(document.getElementById("function").value)
 	};
-
 }
 
 
+async function api(url, data) {
+	let response = await fetch(url, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify(data)
+	});
 
-async function readRegisters()
-{
-
-	let cfg=getSettings();
+	return await response.json();
+}
 
 
-	let request =
-	{
+function uint32BE(a, b) {
+	return ((a << 16) | b) >>> 0;
+}
 
-		...cfg,
 
-		start:
-		Number(
-			document.getElementById("start").value
-		),
+function uint32LE(a, b) {
+	return ((b << 16) | a) >>> 0;
+}
 
-		count:
-		Number(
-			document.getElementById("count").value
-		)
 
+function floatBE(a, b) {
+	let buffer = new ArrayBuffer(4);
+	let view = new DataView(buffer);
+
+	view.setUint16(0, a);
+	view.setUint16(2, b);
+
+	return view.getFloat32(0);
+}
+
+
+function floatLE(a, b) {
+	let buffer = new ArrayBuffer(4);
+	let view = new DataView(buffer);
+
+	view.setUint16(0, b);
+	view.setUint16(2, a);
+
+	return view.getFloat32(0);
+}
+
+
+function int16(value) {
+	return value > 32767 ? value - 65536 : value;
+}
+
+
+async function readRegisters() {
+	let request = {
+		...getConfig(),
+		start: Number(document.getElementById("start").value),
+		count: Number(document.getElementById("count").value)
 	};
 
+	let result = await api("/modbus/read", request);
 
-
-	let response =
-	await fetch(
-		"/modbus/read",
-		{
-			method:"POST",
-
-			headers:
-			{
-				"Content-Type":
-				"application/json"
-			},
-
-			body:
-			JSON.stringify(request)
-		}
-	);
-
-
-
-	let json =
-	await response.json();
-
-
-
-	if(!json.success)
-	{
-
-		alert(json.error);
+	if (!result.success) {
+		alert(result.error);
 		return;
-
 	}
 
-
-
-	let values=[];
-
-
-	for(let key in json.data)
-	{
-		values.push(
-			json.data[key]
-		);
-	}
-
-
-
-	showRegisters(
-		request.start,
-		values
-	);
-
+	registers = result.data;
+	showTable(registers);
 }
 
 
-
-
-
-async function scanRegisters()
-{
-
-	let cfg=getSettings();
-
-
-	let request =
-	{
-
-		...cfg,
-
-		from:
-		Number(
-			document.getElementById("scanFrom").value
-		),
-
-		to:
-		Number(
-			document.getElementById("scanTo").value
-		)
-
+async function scanRegisters() {
+	let request = {
+		...getConfig(),
+		from: Number(document.getElementById("scanFrom").value),
+		to: Number(document.getElementById("scanTo").value)
 	};
 
+	let result = await api("/modbus/scan", request);
 
-
-	let response =
-	await fetch(
-		"/modbus/scan",
-		{
-
-			method:"POST",
-
-			headers:
-			{
-				"Content-Type":
-				"application/json"
-			},
-
-			body:
-			JSON.stringify(request)
-
-		}
-	);
-
-
-
-	let json =
-	await response.json();
-
-
-
-	if(!json.success)
-	{
-
-		alert(json.error);
+	if (!result.success) {
+		alert(result.error);
 		return;
-
 	}
 
-
-
-	let addresses =
-	Object.keys(json.data)
-	.map(Number)
-	.sort(
-		(a,b)=>a-b
-	);
-
-
-
-	let values =
-	addresses.map(
-		a=>json.data[a]
-	);
-
-
-
-	scannedRegisters = json.data;
-
-
-	showRegisters(
-			addresses[0],
-			values
-	);
-
+	registers = result.data;
+	showTable(registers);
 }
 
 
+function showTable(data) {
+	let html = "";
+
+	let addresses = Object.keys(data)
+		.map(Number)
+		.sort((a, b) => a - b);
 
 
+	for (let i = 0; i < addresses.length; i++) {
+		let address = addresses[i];
+		let value = data[address];
 
-function showRegisters(start, values)
-{
+		let next = data[address + 1];
 
-	let html="";
+		let u32be = "";
+		let u32le = "";
+		let fbe = "";
+		let fle = "";
 
-
-	for(let i=0;i<values.length;i++)
-	{
-
-
-		let value =
-		values[i];
-
-
-		let hex =
-		"0x"+
-		value
-		.toString(16)
-		.padStart(4,"0")
-		.toUpperCase();
-
-
-
-		let int16 =
-		value>32767 ?
-		value-65536 :
-		value;
-
-
-
-		let uint32BE="";
-		let uint32LE="";
-		let floatBE="";
-		let floatLE="";
-
-
-
-		if(i+1<values.length)
-		{
-
-			let buffer =
-			new ArrayBuffer(4);
-
-
-			let view =
-			new DataView(buffer);
-
-
-
-			view.setUint16(
-				0,
-				values[i],
-				false
-			);
-
-			view.setUint16(
-				2,
-				values[i+1],
-				false
-			);
-
-
-
-			uint32BE =
-			view.getUint32(
-				0,
-				false
-			);
-
-
-
-			floatBE =
-			view.getFloat32(
-				0,
-				false
-			).toFixed(4);
-
-
-
-
-			view.setUint16(
-				0,
-				values[i+1],
-				false
-			);
-
-
-			view.setUint16(
-				2,
-				values[i],
-				false
-			);
-
-
-
-			uint32LE =
-			view.getUint32(
-				0,
-				false
-			);
-
-
-
-			floatLE =
-			view.getFloat32(
-				0,
-				false
-			).toFixed(4);
-
+		if (next !== undefined) {
+			u32be = uint32BE(value, next);
+			u32le = uint32LE(value, next);
+			fbe = floatBE(value, next).toFixed(4);
+			fle = floatLE(value, next).toFixed(4);
 		}
-
-
-
-		html +=
-		`
-
-<tr>
-
-<td>${start+i}</td>
-
-<td>${hex}</td>
-
-<td>${value}</td>
-
-<td>${int16}</td>
-
-<td>${uint32BE}</td>
-
-<td>${uint32LE}</td>
-
-<td>${floatBE}</td>
-
-<td>${floatLE}</td>
-
-</tr>
-
-`;
-
-	}
-
-
-
-	document.getElementById("table")
-	.innerHTML=html;
-
-}
-
-let scannedRegisters = {};
-
-function searchRegisters()
-{
-
-	let target =
-	Number(
-		document.getElementById(
-			"searchValue"
-		).value
-	);
-
-
-
-	let result=[];
-
-
-	let addresses =
-	Object.keys(scannedRegisters)
-	.map(Number)
-	.sort(
-		(a,b)=>a-b
-	);
-
-
-
-	for(let i=0;i<addresses.length;i++)
-	{
-
-
-		let addr =
-		addresses[i];
-
-
-		let value =
-		scannedRegisters[addr];
-
-
-
-		// uint16
-
-		if(value === target)
-		{
-
-			result.push({
-				address:addr,
-				type:"uint16",
-				value:value
-			});
-
-		}
-
-
-
-		// int16
-
-		let signed =
-		value > 32767 ?
-		value-65536 :
-		value;
-
-
-
-		if(signed === target)
-		{
-
-			result.push({
-				address:addr,
-				type:"int16",
-				value:signed
-			});
-
-		}
-
-
-
-		// 32 Bit Kombinationen
-
-		if(i+1 < addresses.length)
-		{
-
-
-			let next =
-			scannedRegisters[
-				addresses[i+1]
-			];
-
-
-
-			let buffer =
-			new ArrayBuffer(4);
-
-
-			let view =
-			new DataView(buffer);
-
-
-
-			view.setUint16(
-				0,
-				value,
-				false
-			);
-
-
-			view.setUint16(
-				2,
-				next,
-				false
-			);
-
-
-
-			let uint32 =
-			view.getUint32(
-				0,
-				false
-			);
-
-
-
-			if(uint32 === target)
-			{
-
-				result.push({
-
-					address:addr,
-
-					type:"uint32 BE",
-
-					value:uint32
-
-				});
-
-			}
-
-
-
-			let float =
-			view.getFloat32(
-				0,
-				false
-			);
-
-
-
-			if(
-				Math.abs(float-target)
-				<0.0001
-			)
-			{
-
-				result.push({
-
-					address:addr,
-
-					type:"float BE",
-
-					value:float
-
-				});
-
-			}
-
-
-		}
-
-	}
-
-
-
-	showSearchResults(result);
-
-}
-
-
-
-
-function showSearchResults(results)
-{
-
-	let html="";
-
-
-	for(let r of results)
-	{
 
 		html += `
-
 <tr>
-
-<td>${r.address}</td>
-
-<td>${r.type}</td>
-
-<td>${r.value}</td>
-
-</tr>
-
-`;
-
+<td>${address}</td>
+<td>0x${value.toString(16).padStart(4, "0").toUpperCase()}</td>
+<td>${value}</td>
+<td>${int16(value)}</td>
+<td>${u32be}</td>
+<td>${u32le}</td>
+<td>${fbe}</td>
+<td>${fle}</td>
+</tr>`;
 	}
 
+	document.getElementById("table").innerHTML = html;
+}
 
-	document.getElementById(
-		"searchTable"
-	)
-	.innerHTML=html;
 
+function searchRegisters() {
+	let target = Number(
+		document.getElementById("searchValue").value
+	);
+
+	let result = [];
+
+	let addresses = Object.keys(registers)
+		.map(Number)
+		.sort((a, b) => a - b);
+
+
+	for (let i = 0; i < addresses.length; i++) {
+		let address = addresses[i];
+		let value = registers[address];
+		let next = registers[address + 1];
+
+
+		if (value === target) {
+			result.push({
+				address,
+				type: "uint16",
+				value
+			});
+		}
+
+
+		if (int16(value) === target) {
+			result.push({
+				address,
+				type: "int16",
+				value: int16(value)
+			});
+		}
+
+
+		if (next !== undefined) {
+			let u32be = uint32BE(value, next);
+			let u32le = uint32LE(value, next);
+
+			if (u32be === target) {
+				result.push({
+					address,
+					type: "uint32 BE",
+					value: u32be
+				});
+			}
+
+			if (u32le === target) {
+				result.push({
+					address,
+					type: "uint32 LE",
+					value: u32le
+				});
+			}
+
+
+			let fbe = floatBE(value, next);
+
+			if (Math.abs(fbe - target) < 0.0001) {
+				result.push({
+					address,
+					type: "float BE",
+					value: fbe
+				});
+			}
+
+
+			let fle = floatLE(value, next);
+
+			if (Math.abs(fle - target) < 0.0001) {
+				result.push({
+					address,
+					type: "float LE",
+					value: fle
+				});
+			}
+		}
+	}
+
+	showSearchResults(result);
+}
+
+
+function showSearchResults(result) {
+	let html = "";
+
+	for (let item of result) {
+		html += `
+<tr>
+<td>${item.address}</td>
+<td>${item.type}</td>
+<td>${item.value}</td>
+</tr>`;
+	}
+
+	document.getElementById("searchTable").innerHTML = html;
 }
