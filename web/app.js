@@ -1,25 +1,53 @@
-async function readRegisters() {
+function getSettings()
+{
 
-
-	let request = {
+	return {
 
 		ip:
 		document.getElementById("ip").value,
 
 		port:
-		Number(document.getElementById("port").value),
+		Number(
+			document.getElementById("port").value
+		),
 
 		unit:
-		Number(document.getElementById("unit").value),
+		Number(
+			document.getElementById("unit").value
+		),
 
 		function:
-		Number(document.getElementById("function").value),
+		Number(
+			document.getElementById("function").value
+		)
+
+	};
+
+}
+
+
+
+async function readRegisters()
+{
+
+	let cfg=getSettings();
+
+
+	let request =
+	{
+
+		...cfg,
 
 		start:
-		Number(document.getElementById("start").value),
+		Number(
+			document.getElementById("start").value
+		),
 
 		count:
-		Number(document.getElementById("count").value)
+		Number(
+			document.getElementById("count").value
+		)
+
 	};
 
 
@@ -29,10 +57,13 @@ async function readRegisters() {
 		"/modbus/read",
 		{
 			method:"POST",
-			headers:{
+
+			headers:
+			{
 				"Content-Type":
 				"application/json"
 			},
+
 			body:
 			JSON.stringify(request)
 		}
@@ -40,43 +71,149 @@ async function readRegisters() {
 
 
 
-	let data =
+	let json =
 	await response.json();
 
 
 
-	if(!data.success){
+	if(!json.success)
+	{
 
-		alert(data.error);
+		alert(json.error);
 		return;
 
 	}
 
 
+
+	let values=[];
+
+
+	for(let key in json.data)
+	{
+		values.push(
+			json.data[key]
+		);
+	}
+
+
+
 	showRegisters(
 		request.start,
-		data.registers
+		values
 	);
 
 }
 
 
 
-function showRegisters(start, values){
 
+
+async function scanRegisters()
+{
+
+	let cfg=getSettings();
+
+
+	let request =
+	{
+
+		...cfg,
+
+		from:
+		Number(
+			document.getElementById("scanFrom").value
+		),
+
+		to:
+		Number(
+			document.getElementById("scanTo").value
+		)
+
+	};
+
+
+
+	let response =
+	await fetch(
+		"/modbus/scan",
+		{
+
+			method:"POST",
+
+			headers:
+			{
+				"Content-Type":
+				"application/json"
+			},
+
+			body:
+			JSON.stringify(request)
+
+		}
+	);
+
+
+
+	let json =
+	await response.json();
+
+
+
+	if(!json.success)
+	{
+
+		alert(json.error);
+		return;
+
+	}
+
+
+
+	let addresses =
+	Object.keys(json.data)
+	.map(Number)
+	.sort(
+		(a,b)=>a-b
+	);
+
+
+
+	let values =
+	addresses.map(
+		a=>json.data[a]
+	);
+
+
+
+	showRegisters(
+		addresses[0],
+		values
+	);
+
+}
+
+
+
+
+
+function showRegisters(start, values)
+{
 
 	let html="";
 
 
-	for(let i=0;i<values.length;i++){
+	for(let i=0;i<values.length;i++)
+	{
 
 
-		let addr=start+i;
+		let value =
+		values[i];
 
 
 		let hex =
 		"0x"+
-		values[i]
+		value
 		.toString(16)
 		.padStart(4,"0")
 		.toUpperCase();
@@ -84,9 +221,9 @@ function showRegisters(start, values){
 
 
 		let int16 =
-		values[i]>32767 ?
-		values[i]-65536 :
-		values[i];
+		value>32767 ?
+		value-65536 :
+		value;
 
 
 
@@ -96,8 +233,9 @@ function showRegisters(start, values){
 		let floatLE="";
 
 
-		if(i+1<values.length){
 
+		if(i+1<values.length)
+		{
 
 			let buffer =
 			new ArrayBuffer(4);
@@ -123,13 +261,19 @@ function showRegisters(start, values){
 
 
 			uint32BE =
-			view.getUint32(0,false);
+			view.getUint32(
+				0,
+				false
+			);
 
 
 
 			floatBE =
-			view.getFloat32(0,false)
-			.toFixed(4);
+			view.getFloat32(
+				0,
+				false
+			).toFixed(4);
+
 
 
 
@@ -138,6 +282,7 @@ function showRegisters(start, values){
 				values[i+1],
 				false
 			);
+
 
 			view.setUint16(
 				2,
@@ -148,27 +293,33 @@ function showRegisters(start, values){
 
 
 			uint32LE =
-			view.getUint32(0,false);
+			view.getUint32(
+				0,
+				false
+			);
 
 
 
 			floatLE =
-			view.getFloat32(0,false)
-			.toFixed(4);
+			view.getFloat32(
+				0,
+				false
+			).toFixed(4);
 
 		}
 
 
 
-		html += `
+		html +=
+		`
 
 <tr>
 
-<td>${addr}</td>
+<td>${start+i}</td>
 
 <td>${hex}</td>
 
-<td>${values[i]}</td>
+<td>${value}</td>
 
 <td>${int16}</td>
 
@@ -185,6 +336,7 @@ function showRegisters(start, values){
 `;
 
 	}
+
 
 
 	document.getElementById("table")

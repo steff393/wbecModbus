@@ -2,6 +2,7 @@
 <html lang="de">
 
 <head>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -14,21 +15,35 @@
 
 <body>
 
-
 <h1>Modbus Explorer</h1>
 
 
 <div class="box">
 
+<h2>Verbindung</h2>
+
+
 <label>
 IP-Adresse
+
 <input id="ip" value="192.168.178.63">
+
+</label>
+
+
+<label>
+Port
+
+<input id="port" value="502">
+
 </label>
 
 
 <label>
 Unit ID
+
 <input id="unit" value="247">
+
 </label>
 
 
@@ -36,15 +51,31 @@ Unit ID
 Function
 
 <select id="function">
-<option value="3">Holding Register</option>
-<option value="4">Input Register</option>
+
+<option value="3">
+Holding Register (FC03)
+</option>
+
+<option value="4">
+Input Register (FC04)
+</option>
+
 </select>
 
 </label>
 
 
+</div>
+
+
+
+<div class="box">
+
+<h2>Lesen</h2>
+
+
 <label>
-Start
+Startregister
 
 <input id="start" value="35000">
 
@@ -70,17 +101,54 @@ Lesen
 
 <div class="box">
 
+<h2>Scan</h2>
+
+
+<label>
+Von
+
+<input id="scanFrom" value="30000">
+
+</label>
+
+
+<label>
+Bis
+
+<input id="scanTo" value="31000">
+
+</label>
+
+
+<button onclick="scanRegisters()">
+Scan starten
+</button>
+
+
+</div>
+
+
+
+<div class="box">
+
 <table>
 
+
 <thead>
+
 <tr>
+
 <th>Adresse</th>
 <th>Hex</th>
 <th>uint16</th>
 <th>int16</th>
 <th>uint32 BE</th>
 <th>uint32 LE</th>
+<th>float BE</th>
+<th>float LE</th>
+
 </tr>
+
 </thead>
 
 
@@ -91,11 +159,12 @@ Lesen
 
 </table>
 
-
 </div>
 
 
 <script src="app.js"></script>
 
+
 </body>
+
 </html>
