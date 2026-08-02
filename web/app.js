@@ -186,9 +186,12 @@ async function scanRegisters()
 
 
 
+	scannedRegisters = json.data;
+
+
 	showRegisters(
-		addresses[0],
-		values
+			addresses[0],
+			values
 	);
 
 }
@@ -340,6 +343,217 @@ function showRegisters(start, values)
 
 
 	document.getElementById("table")
+	.innerHTML=html;
+
+}
+
+let scannedRegisters = {};
+
+function searchRegisters()
+{
+
+	let target =
+	Number(
+		document.getElementById(
+			"searchValue"
+		).value
+	);
+
+
+
+	let result=[];
+
+
+	let addresses =
+	Object.keys(scannedRegisters)
+	.map(Number)
+	.sort(
+		(a,b)=>a-b
+	);
+
+
+
+	for(let i=0;i<addresses.length;i++)
+	{
+
+
+		let addr =
+		addresses[i];
+
+
+		let value =
+		scannedRegisters[addr];
+
+
+
+		// uint16
+
+		if(value === target)
+		{
+
+			result.push({
+				address:addr,
+				type:"uint16",
+				value:value
+			});
+
+		}
+
+
+
+		// int16
+
+		let signed =
+		value > 32767 ?
+		value-65536 :
+		value;
+
+
+
+		if(signed === target)
+		{
+
+			result.push({
+				address:addr,
+				type:"int16",
+				value:signed
+			});
+
+		}
+
+
+
+		// 32 Bit Kombinationen
+
+		if(i+1 < addresses.length)
+		{
+
+
+			let next =
+			scannedRegisters[
+				addresses[i+1]
+			];
+
+
+
+			let buffer =
+			new ArrayBuffer(4);
+
+
+			let view =
+			new DataView(buffer);
+
+
+
+			view.setUint16(
+				0,
+				value,
+				false
+			);
+
+
+			view.setUint16(
+				2,
+				next,
+				false
+			);
+
+
+
+			let uint32 =
+			view.getUint32(
+				0,
+				false
+			);
+
+
+
+			if(uint32 === target)
+			{
+
+				result.push({
+
+					address:addr,
+
+					type:"uint32 BE",
+
+					value:uint32
+
+				});
+
+			}
+
+
+
+			let float =
+			view.getFloat32(
+				0,
+				false
+			);
+
+
+
+			if(
+				Math.abs(float-target)
+				<0.0001
+			)
+			{
+
+				result.push({
+
+					address:addr,
+
+					type:"float BE",
+
+					value:float
+
+				});
+
+			}
+
+
+		}
+
+	}
+
+
+
+	showSearchResults(result);
+
+}
+
+
+
+
+function showSearchResults(results)
+{
+
+	let html="";
+
+
+	for(let r of results)
+	{
+
+		html += `
+
+<tr>
+
+<td>${r.address}</td>
+
+<td>${r.type}</td>
+
+<td>${r.value}</td>
+
+</tr>
+
+`;
+
+	}
+
+
+	document.getElementById(
+		"searchTable"
+	)
 	.innerHTML=html;
 
 }
