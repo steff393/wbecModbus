@@ -1,0 +1,26 @@
+# Go binaries
+*.exe
+
+# Linux binaries
+/modbus-bridge
+
+# Build output
+/bin/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
+# Test data
+*.json.bak
+
+# Generated files
+/dist/

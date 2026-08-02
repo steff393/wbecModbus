@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Modbus Explorer</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+<h1>Modbus Explorer</h1>
+
+
+<div class="box">
+
+<label>
+IP-Adresse
+<input id="ip" value="192.168.178.50">
+</label>
+
+
+<label>
+Unit ID
+<input id="unit" value="247">
+</label>
+
+
+<label>
+Function
+
+<select id="function">
+<option value="3">Holding Register</option>
+<option value="4">Input Register</option>
+</select>
+
+</label>
+
+
+<label>
+Start
+
+<input id="start" value="35000">
+
+</label>
+
+
+<label>
+Anzahl
+
+<input id="count" value="20">
+
+</label>
+
+
+<button onclick="readRegisters()">
+Lesen
+</button>
+
+
+</div>
+
+
+
+<div class="box">
+
+<table>
+
+<thead>
+<tr>
+<th>Adresse</th>
+<th>Hex</th>
+<th>uint16</th>
+<th>int16</th>
+<th>uint32 BE</th>
+<th>uint32 LE</th>
+</tr>
+</thead>
+
+
+<tbody id="table">
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+<script src="app.js"></script>
+
+</body>
+</html>
