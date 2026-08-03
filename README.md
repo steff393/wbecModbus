@@ -1,274 +1,181 @@
-﻿# ModbusBridge
+# ModbusBridge
 
-## Übersicht
+Eine lokale Hardware-Bridge, die einen Browser mit **Modbus-TCP-Geräten** verbindet – z.B.
+um einen Wechselrichter auszulesen, ohne zusätzliche Software installieren zu müssen.
 
-ModbusBridge ist eine lokale Hardware-Bridge, die einen Browser mit Modbus-TCP-Geräten verbindet.
+Die Anwendung besteht aus einer kleinen portablen `ModbusBridge.exe`, die
 
-Ziel ist es, Endkunden eine einfache Möglichkeit zu geben, ihren Wechselrichter oder andere Modbus-TCP-Geräte auszulesen, ohne zusätzliche Software installieren zu müssen.
+1. eine lokale HTTP-API bereitstellt,
+2. die Weboberfläche ausliefert (in die EXE eingebettet) und
+3. per Modbus TCP mit dem Gerät kommuniziert.
 
-Die Anwendung besteht aus:
+```
+Browser  ──HTTP──►  127.0.0.1:8765 (ModbusBridge.exe)  ──Modbus TCP──►  Wechselrichter
+```
 
-1. einer kleinen lokalen Bridge (`ModbusBridge.exe`)
-2. einer Browser-Oberfläche
-
-Die Bridge stellt eine lokale HTTP-API bereit und kommuniziert mit dem Gerät über Modbus TCP.
-
----
-
-# Architektur
-Browser
-|
-| HTTP
-|
-127.0.0.1:8765
-|
-| Modbus TCP
-|
-Wechselrichter
-
-Die Bridge lauscht ausschließlich auf: 127.0.0.1:8765  
-
-
-und ist somit nicht aus dem Netzwerk erreichbar.
+Die Bridge lauscht **ausschließlich auf `127.0.0.1:8765`** und ist damit nicht aus dem
+Netzwerk erreichbar. Die Anwendung ist bewusst **Read-Only** (nur FC03/FC04) – es können
+keine Geräteparameter verändert werden.
 
 ---
 
-# Ziele
+## Build & Start
 
-- einfache Diagnose von Wechselrichtern
-- keine Installation beim Kunden
-- keine direkte Browser-Modbus-Kommunikation notwendig
-- portable EXE
-- herstellerunabhängige Basis
+Voraussetzung: Go (siehe `go.mod`). Einzige Abhängigkeit: `github.com/goburrow/modbus`.
 
----
+```sh
+go build          # erzeugt ModbusBridge.exe (bzw. modbus-bridge unter Linux)
+go run .          # bauen + starten in einem Schritt
+go run . -dev     # Entwicklung: web/ wird von der Platte geladen (Datei ändern + Browser neu laden, kein Rebuild)
+```
 
-# Unterstützte Funktionen
+Nach dem Start im Browser öffnen: <http://127.0.0.1:8765>
 
-Aktuell:
-
-- Modbus TCP
-- Function Code 03:
-  - Holding Register lesen
-- Function Code 04:
-  - Input Register lesen
-
-Keine Schreibfunktionen.
-
-Die Anwendung ist bewusst Read-Only aufgebaut.
+Die Weboberfläche ist per `//go:embed` in die EXE eingebettet – die fertige `ModbusBridge.exe`
+ist somit eine **einzelne portable Datei**. Nur der `profiles/`-Ordner wird zur Laufzeit neben
+der EXE angelegt/gelesen.
 
 ---
 
-# Projektstruktur
-modbus-bridge/
+## Funktionen der Oberfläche
 
-├── main.go
-
-├── go.mod
-├── go.sum
-
-└── web/  
-	├── index.html
-	├── style.css
-	└── app.js
-
-
----
-
-# Build
-
-Voraussetzung:
-
-- Go installiert
-
-Abhängigkeit:
-github.com/goburrow/modbus
-
-Build:
-go build
-
-Ergebnis:
-ModbusBridge.exe
+- **Verbindung** – IP, Port, Unit ID, Function Code (FC03 Holding / FC04 Input).
+- **Lesen** – einen Registerbereich (Start + Anzahl) lesen.
+- **Scan** – einen größeren Bereich in 125er-Blöcken mit 100 ms Pause abtasten.
+- **Registertabelle**
+  - **Hover** über eine Zeile zeigt einen Tooltip mit *allen* Interpretationen
+    (hex, binär, uint16, int16, ascii, uint32/int32 BE+LE, float BE+LE) – und, falls ein Profil
+    aktiv ist, dem interpretierten physikalischen Wert.
+  - **Klick** auf eine Zeile liest genau dieses Register neu und aktualisiert es (kurzes Highlight).
+  - **Checkbox** markiert ein Register für das **zyklische Lesen**.
+- **Zyklisch lesen (Watch)** – markierte Register werden im einstellbaren Intervall (ms) laufend
+  aktualisiert; Start/Stopp per Knopfdruck.
+- **Suche mit Toleranz** – sucht einen Wert über alle Interpretationen **und gängige Skalierungen**
+  (×1, ×0.1, ×0.01, ×0.001, ×10, ×100, ×1000) innerhalb einer einstellbaren Toleranz.
+  Beispiel: Suche nach `230` (Toleranz ±5) findet auch Register `2328`, weil `2328 × 0.1 = 232.8`
+  (also z.B. 232,8 V).
+- **Profile** – siehe unten.
+- **Hilfe** – der Knopf **„? Hilfe"** oben rechts öffnet eine vollständige Bedienanleitung in der
+  Oberfläche. Dieselbe Anleitung liegt als [`HILFE.md`](HILFE.md) zum Weitergeben/Ausdrucken bei.
 
 ---
 
-# Start
+## Geräteprofile
 
-EXE starten: ModbusBridge.exe
+Ein Profil bündelt Verbindungsdaten und bekannte Register eines Geräts. Profile werden von der
+Bridge als JSON-Dateien im Ordner `profiles/` **gelesen und geschrieben**.
 
-Danach Browser öffnen:http://127.0.0.1:8765
+- Profil im Dropdown wählen → Verbindungsfelder werden gefüllt.
+- **Profil lesen** → alle definierten Register werden ausgelesen und als **physikalische Werte**
+  angezeigt (Rohwert × Skalierung, mit Einheit).
+- **Neu / Bearbeiten** → Editor zum Anlegen/Ändern von Registern (Adresse, Name, Typ, Endianness,
+  Skalierung, Einheit). **Speichern** schreibt die JSON-Datei, **Löschen** entfernt sie.
 
-
----
-
-# HTTP API
-
-## Status
-GET /ping
-
-Antwort:
+Beispiel `profiles/goodwe-et.json`:
 
 ```json
 {
-  "name":"ModbusBridge",
-  "version":"0.3"
+  "name": "Goodwe ET",
+  "ip": "192.168.178.63",
+  "port": 502,
+  "unit": 247,
+  "function": 3,
+  "registers": [
+    { "address": 37113, "name": "Wirkleistung gesamt", "type": "int32", "endian": "big", "scale": 1, "unit": "W" }
+  ]
 }
+```
 
-Register lesen
-POST /modbus/read
+Feldbedeutung eines Registers:
 
-Beispiel:
+| Feld      | Werte                                             | Bedeutung                                  |
+|-----------|---------------------------------------------------|--------------------------------------------|
+| `address` | 0–65535                                            | Startadresse                               |
+| `type`    | `uint16`, `int16`, `uint32`, `int32`, `float32`   | 16-bit belegt 1, 32-bit belegt 2 Register  |
+| `endian`  | `big`, `little`                                    | Wortreihenfolge bei 32-bit-Typen           |
+| `scale`   | Zahl (z.B. `0.1`)                                 | `physikalisch = roh × scale`               |
+| `unit`    | Text (z.B. `W`, `V`)                              | Anzeigeeinheit                             |
 
-{
- "ip":"192.168.178.63",
- "port":502,
- "unit":247,
- "function":3,
- "start":35000,
- "count":20
-}
+> Hinweis: Die im mitgelieferten Goodwe-Profil hinterlegten Adressen sind Beispiele und müssen
+> gegen die Modbus-Doku des konkreten Geräts geprüft werden.
 
+---
+
+## HTTP API
+
+Alle Fehler werden mit HTTP 200 und `{"success": false, "error": "..."}` gemeldet; Clients werten
+das `success`-Flag aus.
+
+### `GET /ping`
+```json
+{ "name": "ModbusBridge", "version": "0.5" }
+```
+
+### `POST /modbus/read`
+```json
+{ "ip": "192.168.178.63", "port": 502, "unit": 247, "function": 3, "start": 35000, "count": 20 }
+```
 Antwort:
+```json
+{ "success": true, "data": { "35000": 1234, "35001": 5678 } }
+```
 
-{
- "success":true,
- "data":
- {
-   "35000":1234,
-   "35001":5678
- }
-}
-Scanner
-POST /modbus/scan
+### `POST /modbus/scan`
+```json
+{ "ip": "192.168.178.63", "port": 502, "unit": 247, "function": 3, "from": 30000, "to": 31000 }
+```
+Blockgröße max. 125 Register, 100 ms Pause zwischen Requests, max. Spannweite 10000.
 
-Beispiel:
+### `GET /profiles`
+```json
+{ "success": true, "profiles": [ { "name": "Goodwe ET", "ip": "...", "registers": [ ... ] } ] }
+```
 
-{
- "ip":"192.168.178.63",
- "port":502,
- "unit":247,
- "function":3,
- "from":30000,
- "to":31000
-}
+### `POST /profiles/save`
+Nimmt ein vollständiges Profil-Objekt entgegen und schreibt es nach `profiles/<slug>.json`.
 
-Eigenschaften:
-
-maximale Blockgröße: 125 Register
-Pause zwischen Requests: 100ms
-nur Lesen
-Sicherheitsaspekte
-
-Die Anwendung verwendet ausschließlich Modbus-Leseoperationen.
-
-Keine Unterstützung für:
-
-FC05
-FC06
-FC15
-FC16
-
-Damit können keine Wechselrichterparameter verändert werden.
-
-Aktuelle Oberfläche
-
-Die Weboberfläche unterstützt:
-
-IP-Adresse
-Port
-Unit ID
-Holding/Input Register
-Einzelne Registerbereiche lesen
-Scanner
-Interpretation:
-uint16
-int16
-uint32 Big Endian
-uint32 Little Endian
-float Big Endian
-float Little Endian
-Geplante Funktionen
-Register-Suche
-
-Suche nach bekannten Werten:
-
-Beispiel:
-
-230
-
-findet:
-
-35110 uint16 230
-35120 float 230.0
-Geräteprofile
-
-Unterstützung für Herstellerprofile:
-
-Beispiel:
-
-profiles/goodwe-et.json
-
-mit:
-
-Registername
-Datentyp
-Skalierung
-Einheit
-Weitere Ideen
-Live-Monitor
-CSV Export
-JSON Export
-Registervergleich
-automatische Geräteerkennung
-Modbus RTU über USB
-Firmwarediagnose
-Entwicklungsentscheidungen
-
-Bewusst gewählt:
-
-Go statt Python:
-einzelne EXE
-keine Runtime-Abhängigkeit
-einfache Verteilung
-Browser statt Desktop-GUI:
-einfache Erweiterbarkeit
-zentrale Aktualisierung
-Bridge getrennt von UI:
-Hardwarezugriff bleibt stabil
-Oberfläche kann unabhängig erweitert werden
+### `POST /profiles/delete`
+```json
+{ "name": "Goodwe ET" }
+```
 
 ---
 
-Damit haben wir jetzt einen guten "Kontextanker" für zukünftige Sessions oder andere KI-Unterstützung.
+## Projektstruktur
+
+```
+mb/
+├── main.go            # Flags, go:embed, Routing, Static-/Dev-Serving
+├── types.go           # Request/Response-Strukturen
+├── modbus.go          # Verbindung + Registerlesen (goburrow/modbus)
+├── handlers.go        # HTTP-Handler für read/scan
+├── profiles.go        # Profil-CRUD (Dateien) + Handler
+├── go.mod / go.sum
+├── profiles/          # Geräteprofile als JSON (zur Laufzeit gelesen/geschrieben)
+│   └── goodwe-et.json
+└── web/               # in die EXE eingebettet
+    ├── index.html
+    ├── style.css
+    └── js/
+        ├── interpret.js  # reine Wert-Interpretation
+        ├── api.js        # fetch-Wrapper
+        └── app.js        # UI-Logik/State
+```
 
 ---
 
-Als nächstes würde ich die **Suche** nicht einfach als Textsuche bauen, sondern etwas intelligenter:
+## Sicherheit
 
-## Register Value Search
+- Bind ausschließlich auf `127.0.0.1` – nicht aus dem Netzwerk erreichbar.
+- Nur Lese-Function-Codes (FC03/FC04). **Kein** FC05/06/15/16 → keine Parameteränderung am Gerät.
+- Profilnamen werden beim Speichern zu sicheren Dateinamen normalisiert (kein Path-Traversal).
 
-Eingabe:
+---
 
+## Entwicklungsentscheidungen
 
-Suche:
-230
-
-
-Die Webseite prüft jedes Register als:
-
-- uint16
-- int16
-- uint32 BE
-- uint32 LE
-- float32 BE
-- float32 LE
-
-und zeigt:
-
-|Adresse|Typ|Wert|
-|-|-|-|
-|35110|uint16|230|
-|35120|float32 BE|230.000|
-|35200|int16|-230|
-
-Dafür brauchen wir nur `app.js` erweitern – die Bridge bleibt unverändert. Das ist ein gutes Beispiel für die gewählte Architektur.
+- **Go statt Python:** einzelne EXE, keine Runtime-Abhängigkeit, einfache Verteilung.
+- **Browser statt Desktop-GUI:** einfache Erweiterbarkeit, keine GUI-Toolkits.
+- **Dumme Bridge, Logik im Frontend:** die Bridge liefert nur Rohregister (`uint16`), sämtliche
+  Interpretation, Suche und Darstellung passieren im Browser. Neue Anzeige-/Suchfunktionen brauchen
+  daher meist nur Änderungen unter `web/`.

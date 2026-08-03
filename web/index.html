@@ -3,128 +3,298 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Modbus Explorer</title>
+	<title>ModbusBridge – Modbus Explorer</title>
 	<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h1>Modbus Explorer</h1>
+<header class="appbar">
+	<div class="brand">
+		<span class="brand__logo">⚡</span>
+		<span class="brand__name">ModbusBridge</span>
+		<span class="brand__version" id="version"></span>
+	</div>
+	<div class="appbar__right">
+		<div class="status status--idle" id="status">
+			<span class="status__dot"></span>
+			<span class="status__text">…</span>
+		</div>
+		<button class="btn btn--sm" id="btnHelp" title="Anleitung öffnen">? Hilfe</button>
+	</div>
+</header>
 
-<div class="box">
-	<h2>Verbindung</h2>
+<main class="layout">
 
-	<label>
-		IP-Adresse
-		<input id="ip" value="192.168.178.63">
-	</label>
+	<!-- Sidebar -->
+	<aside class="sidebar">
 
-	<label>
-		Port
-		<input id="port" value="502">
-	</label>
+		<section class="card">
+			<h2>Profil</h2>
+			<label>Gerät
+				<select id="profileSelect"></select>
+			</label>
+			<div class="btn-row">
+				<button class="btn btn--sm" id="btnProfileRead">Profil lesen</button>
+				<button class="btn btn--ghost btn--sm" id="btnProfileNew">Neu</button>
+				<button class="btn btn--ghost btn--sm" id="btnProfileEdit">Bearbeiten</button>
+				<button class="btn btn--ghost btn--sm" id="btnProfileDelete">Löschen</button>
+			</div>
+		</section>
 
-	<label>
-		Unit ID
-		<input id="unit" value="247">
-	</label>
+		<section class="card">
+			<h2>Verbindung</h2>
+			<label>IP-Adresse <input id="ip" value="192.168.178.63"></label>
+			<div class="grid-2">
+				<label>Port <input id="port" value="502"></label>
+				<label>Unit ID <input id="unit" value="247"></label>
+			</div>
+			<label>Function
+				<select id="function">
+					<option value="3">Holding Register (FC03)</option>
+					<option value="4">Input Register (FC04)</option>
+				</select>
+			</label>
+		</section>
 
-	<label>
-		Function
-		<select id="function">
-			<option value="3">Holding Register (FC03)</option>
-			<option value="4">Input Register (FC04)</option>
-		</select>
-	</label>
+		<section class="card">
+			<h2>Lesen</h2>
+			<div class="grid-2">
+				<label>Start <input id="start" value="35000"></label>
+				<label>Anzahl <input id="count" value="20"></label>
+			</div>
+			<button class="btn btn--primary" id="btnRead">Register lesen</button>
+		</section>
+
+		<section class="card">
+			<h2>Scan</h2>
+			<div class="grid-2">
+				<label>Von <input id="scanFrom" value="30000"></label>
+				<label>Bis <input id="scanTo" value="31000"></label>
+			</div>
+			<button class="btn" id="btnScan">Bereich scannen</button>
+			<div class="progress hidden" id="scanProgress">
+				<div class="progress__track"><div class="progress__fill" id="scanBar"></div></div>
+				<span class="progress__text" id="scanText"></span>
+			</div>
+		</section>
+
+		<section class="card">
+			<h2>Zyklisch lesen <span class="pill" id="watchCount">0</span></h2>
+			<label>Intervall (ms) <input id="pollInterval" value="1000"></label>
+			<button class="btn" id="pollToggle">▶ Zyklisch lesen</button>
+			<table class="mini">
+				<thead><tr><th>Adr.</th><th>Roh</th><th>Wert</th><th></th></tr></thead>
+				<tbody id="watchTable"></tbody>
+			</table>
+		</section>
+
+	</aside>
+
+	<!-- Content -->
+	<section class="content">
+
+		<div class="card">
+			<div class="card__head">
+				<h2>Suche</h2>
+			</div>
+			<div class="search-bar">
+				<label>Wert <input id="searchValue" value="230"></label>
+				<label>Toleranz ± <input id="searchTol" value="5"></label>
+				<button class="btn btn--primary" id="btnSearch">Suchen</button>
+				<span class="muted" id="searchInfo"></span>
+			</div>
+			<div class="table-scroll table-scroll--short">
+				<table>
+					<thead><tr>
+						<th>Adresse</th><th>Typ</th><th>Rohwert</th><th>Skalierung</th><th>Ergebnis</th>
+					</tr></thead>
+					<tbody id="searchTable"></tbody>
+				</table>
+			</div>
+			<p class="hint">Findet auch skalierte Treffer: <code>230</code> matcht z.B. <code>2328 ×0.1 = 232.8</code>.</p>
+		</div>
+
+		<div class="card hidden" id="profilePanel">
+			<div class="card__head">
+				<h2>Profil-Register – <span id="profilePanelName"></span></h2>
+			</div>
+			<div class="table-scroll table-scroll--short">
+				<table>
+					<thead><tr>
+						<th>Name</th><th>Adresse</th><th>Typ</th><th>Rohwert</th><th>Physikalisch</th>
+					</tr></thead>
+					<tbody id="profileValues"></tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="card">
+			<div class="card__head">
+				<h2>Register <span class="muted" id="tableCount"></span></h2>
+				<div class="toolbar">
+					<label class="chk"><input type="checkbox" id="filterNonzero"> nur ≠ 0</label>
+					<label class="chk"><input type="checkbox" id="filterChanged"> nur geändert</label>
+					<button class="btn btn--ghost btn--sm" id="btnBaseline" title="Aktuelle Werte als Vergleichsbasis merken">Basis setzen</button>
+					<button class="btn btn--ghost btn--sm" id="btnExportCsv">CSV ⭳</button>
+					<button class="btn btn--ghost btn--sm" id="btnExportJson">JSON ⭳</button>
+					<button class="btn btn--ghost btn--sm" id="btnImport" title="Snapshot-JSON als Vergleichsbasis laden">Import ⭱</button>
+					<input type="file" id="importFile" accept="application/json,.json" hidden>
+				</div>
+			</div>
+			<p class="hint">Zeile <b>anklicken</b> = neu lesen · <b>Checkbox</b> = zyklisch beobachten · <b>Hover</b> = alle Interpretationen · geänderte Werte werden farbig hervorgehoben</p>
+			<div class="table-scroll">
+				<table class="reg-table">
+					<thead><tr>
+						<th></th><th>Adresse</th><th>Hex</th><th>uint16</th><th>int16</th><th>uint32 BE</th><th>float BE</th>
+					</tr></thead>
+					<tbody id="table"></tbody>
+				</table>
+			</div>
+		</div>
+
+	</section>
+</main>
+
+<!-- Floating tooltip -->
+<div id="tooltip" class="tooltip"></div>
+
+<!-- Profile editor -->
+<div class="modal hidden" id="editor">
+	<div class="modal__box">
+		<div class="modal__head">
+			<h2>Profil bearbeiten</h2>
+			<button class="btn btn--ghost btn--sm" id="edCancel">✕</button>
+		</div>
+		<div class="grid-2">
+			<label>Name <input id="edName"></label>
+			<label>IP <input id="edIp"></label>
+			<label>Port <input id="edPort" value="502"></label>
+			<label>Unit ID <input id="edUnit" value="247"></label>
+			<label>Function
+				<select id="edFunction">
+					<option value="3">FC03 (Holding)</option>
+					<option value="4">FC04 (Input)</option>
+				</select>
+			</label>
+		</div>
+
+		<h3>Register</h3>
+		<div class="table-scroll table-scroll--short">
+			<table class="editor-table">
+				<thead><tr>
+					<th>Adresse</th><th>Name</th><th>Typ</th><th>Endian</th><th>Skalierung</th><th>Einheit</th><th></th>
+				</tr></thead>
+				<tbody id="edRegisters"></tbody>
+			</table>
+		</div>
+		<button class="btn btn--ghost btn--sm" id="edAddRow">+ Register</button>
+
+		<div class="modal__foot">
+			<button class="btn" id="edCancel2" onclick="document.getElementById('editor').classList.add('hidden')">Abbrechen</button>
+			<button class="btn btn--primary" id="edSave">Speichern</button>
+		</div>
+	</div>
 </div>
 
+<!-- Hilfe / Anleitung -->
+<div class="modal hidden" id="help">
+	<div class="modal__box modal__box--wide">
+		<div class="modal__head">
+			<h2>Anleitung &amp; Hilfe</h2>
+			<button class="btn btn--ghost btn--sm" id="helpClose">✕</button>
+		</div>
 
-<div class="box">
-	<h2>Register lesen</h2>
+		<div class="help">
+			<p><b>ModbusBridge</b> liest Werte aus einem Modbus-TCP-Gerät (z.B. Wechselrichter) aus.
+			Die Anwendung <b>liest nur</b> – am Gerät wird nichts verändert.</p>
 
-	<label>
-		Start
-		<input id="start" value="35000">
-	</label>
+			<h3>1. Erste Schritte</h3>
+			<ul>
+				<li><b>ModbusBridge.exe</b> starten (Doppelklick). Ein kleines Konsolenfenster bleibt offen – bitte offen lassen.</li>
+				<li>Browser öffnen und <code>http://127.0.0.1:8765</code> aufrufen.</li>
+				<li>Oben rechts zeigt der <b>Statuspunkt</b> den Zustand an: grün = bereit, gelb = arbeitet, rot = Fehler.</li>
+			</ul>
 
-	<label>
-		Anzahl
-		<input id="count" value="20">
-	</label>
+			<h3>2. Verbindung einstellen</h3>
+			<ul>
+				<li><b>IP-Adresse:</b> Netzwerkadresse des Geräts (z.B. <code>192.168.178.63</code>).</li>
+				<li><b>Port:</b> meist <code>502</code>.</li>
+				<li><b>Unit ID:</b> Geräte-/Slave-Adresse laut Hersteller (z.B. <code>247</code>).</li>
+				<li><b>Function:</b> <b>Holding (FC03)</b> oder <b>Input (FC04)</b> – je nach Register laut Hersteller-Doku. Im Zweifel beides probieren.</li>
+			</ul>
+			<p class="help__tip">Tipp: Am schnellsten geht es über ein <b>Profil</b> (links oben) – damit werden alle Verbindungsfelder automatisch gefüllt.</p>
 
-	<button onclick="readRegisters()">Lesen</button>
+			<h3>3. Register lesen</h3>
+			<ul>
+				<li>Unter <b>Lesen</b> eine <b>Start</b>-Adresse und die <b>Anzahl</b> eingeben, dann <b>„Register lesen"</b>.</li>
+				<li>Die Werte erscheinen rechts in der Tabelle <b>Register</b>.</li>
+			</ul>
+
+			<h3>4. Bereich scannen</h3>
+			<ul>
+				<li>Unter <b>Scan</b> einen Bereich <b>Von/Bis</b> eingeben und <b>„Bereich scannen"</b> drücken.</li>
+				<li>Ein <b>Fortschrittsbalken</b> zeigt den Stand; mit <b>„Abbrechen"</b> lässt sich der Scan jederzeit stoppen.</li>
+			</ul>
+
+			<h3>5. Die Registertabelle</h3>
+			<ul>
+				<li><b>Maus über eine Zeile:</b> Tooltip mit <b>allen Interpretationen</b> (hex, uint16/int16, uint32/int32, Kommazahl, …).</li>
+				<li><b>Zeile anklicken:</b> genau dieses Register wird <b>neu ausgelesen</b> (kurzes blaues Aufblinken).</li>
+				<li><b>Checkbox links:</b> Register zur <b>zyklischen Beobachtung</b> markieren.</li>
+				<li><b>Geänderte Werte</b> werden beim Aktualisieren <b>grün hervorgehoben</b>.</li>
+			</ul>
+
+			<h3>6. Zyklisch lesen (Live)</h3>
+			<ul>
+				<li>Register in der Tabelle per Checkbox markieren.</li>
+				<li>Links unter <b>„Zyklisch lesen"</b> ein <b>Intervall</b> (in Millisekunden) eingeben und starten – die Werte werden laufend aktualisiert. Erneut drücken zum Stoppen.</li>
+			</ul>
+
+			<h3>7. Filter</h3>
+			<ul>
+				<li><b>nur ≠ 0:</b> blendet Register mit dem Wert 0 aus.</li>
+				<li><b>nur geändert:</b> zeigt nur Register, die sich gegenüber einer <b>Basis</b> verändert haben. Zuerst <b>„Basis setzen"</b> drücken (oder einen Snapshot importieren), dann später erneut lesen.</li>
+			</ul>
+
+			<h3>8. Suche mit Toleranz</h3>
+			<p>Einen <b>Wert</b> und eine <b>Toleranz</b> eingeben. Die Suche prüft alle Interpretationen und gängige Skalierungen.
+			Beispiel: Suche nach <code>230</code> (Toleranz ±5) findet auch das Register <code>2328</code>, weil <code>2328 × 0,1 = 232,8</code> (also z.B. 232,8&nbsp;V).</p>
+
+			<h3>9. Export &amp; Import</h3>
+			<ul>
+				<li><b>CSV ⭳:</b> aktuelle Tabelle als Tabellendatei (für Excel).</li>
+				<li><b>JSON ⭳:</b> vollständiger Schnappschuss der Werte.</li>
+				<li><b>Import ⭱:</b> ein zuvor gespeichertes JSON laden – es dient dann als <b>Vergleichsbasis</b> für den Filter „nur geändert".</li>
+			</ul>
+
+			<h3>10. Geräteprofile</h3>
+			<ul>
+				<li><b>Auswählen:</b> Profil im Dropdown wählen → Verbindungsdaten werden gefüllt.</li>
+				<li><b>Profil lesen:</b> liest alle hinterlegten Register und zeigt die <b>physikalischen Werte</b> mit Einheit (z.B. Watt, Volt).</li>
+				<li><b>Neu / Bearbeiten:</b> eigene Register anlegen – je Register: Adresse, Name, Typ, Endianness, Skalierung (Wert × Skalierung) und Einheit. <b>Speichern</b> legt das Profil ab, <b>Löschen</b> entfernt es.</li>
+			</ul>
+
+			<h3>Problembehebung</h3>
+			<ul>
+				<li><b>„Bridge nicht erreichbar":</b> Läuft die ModbusBridge.exe noch? Ist die Adresse <code>http://127.0.0.1:8765</code> korrekt?</li>
+				<li><b>Fehler / Timeout beim Lesen:</b> IP, Port und Unit ID prüfen. Ist das Gerät im selben Netzwerk und eingeschaltet? Blockiert eine Firewall die Verbindung?</li>
+				<li><b>Nur Nullen oder keine Werte:</b> Adressbereich stimmt evtl. nicht – die richtigen Adressen stehen in der Modbus-Doku des Herstellers. Ggf. zwischen <b>Holding (FC03)</b> und <b>Input (FC04)</b> wechseln.</li>
+				<li><b>Werte wirken „komisch":</b> per Tooltip die passende Interpretation (int16, uint32, Kommazahl, …) und ggf. eine Skalierung im Profil wählen.</li>
+			</ul>
+
+			<h3>Sicherheit</h3>
+			<p>Die Anwendung ist erreichbar <b>nur auf diesem PC</b> (127.0.0.1) und nutzt <b>ausschließlich Lesebefehle</b>.
+			Es können <b>keine</b> Geräteeinstellungen verändert werden.</p>
+		</div>
+
+		<div class="modal__foot">
+			<button class="btn btn--primary" id="helpClose2">Verstanden</button>
+		</div>
+	</div>
 </div>
 
-
-<div class="box">
-	<h2>Register Scan</h2>
-
-	<label>
-		Von
-		<input id="scanFrom" value="30000">
-	</label>
-
-	<label>
-		Bis
-		<input id="scanTo" value="31000">
-	</label>
-
-	<button onclick="scanRegisters()">Scan starten</button>
-</div>
-
-
-<div class="box">
-	<h2>Suche</h2>
-
-	<label>
-		Wert
-		<input id="searchValue" value="230">
-	</label>
-
-	<button onclick="searchRegisters()">Suchen</button>
-</div>
-
-
-<div class="box">
-	<h2>Registerwerte</h2>
-
-	<table>
-		<thead>
-			<tr>
-				<th>Adresse</th>
-				<th>Hex</th>
-				<th>uint16</th>
-				<th>int16</th>
-				<th>uint32 BE</th>
-				<th>uint32 LE</th>
-				<th>float BE</th>
-				<th>float LE</th>
-			</tr>
-		</thead>
-
-		<tbody id="table"></tbody>
-	</table>
-</div>
-
-
-<div class="box">
-	<h2>Suchergebnisse</h2>
-
-	<table>
-		<thead>
-			<tr>
-				<th>Adresse</th>
-				<th>Typ</th>
-				<th>Wert</th>
-			</tr>
-		</thead>
-
-		<tbody id="searchTable"></tbody>
-	</table>
-</div>
-
-
-<script src="app.js"></script>
+<script type="module" src="js/app.js"></script>
 
 </body>
 </html>
