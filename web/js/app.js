@@ -469,6 +469,15 @@ function setBaseline() {
 	renderTable();
 }
 
+function clearRegisters() {
+	state.registers = {};
+	state.changed = new Set();
+	renderTable();
+	renderProfileValues();
+	renderWatch();
+	setStatus("ok", "Registertabelle geleert");
+}
+
 function download(filename, text, mime) {
 	const blob = new Blob([text], { type: mime });
 	const url = URL.createObjectURL(blob);
@@ -742,7 +751,7 @@ function wire() {
 		}
 	});
 
-	// Table toolbar: filters, baseline, export, import.
+	// Table toolbar: filters, baseline, export, import, clear.
 	$("filterNonzero").addEventListener("change", (e) => {
 		state.filter.nonzero = e.target.checked;
 		renderTable();
@@ -755,6 +764,7 @@ function wire() {
 	$("btnExportCsv").addEventListener("click", exportCsv);
 	$("btnExportJson").addEventListener("click", exportJson);
 	$("btnImport").addEventListener("click", () => $("importFile").click());
+	$("btnClear").addEventListener("click", clearRegisters);
 	$("importFile").addEventListener("change", (e) => {
 		if (e.target.files[0]) importSnapshot(e.target.files[0]);
 		e.target.value = ""; // allow re-importing the same file
