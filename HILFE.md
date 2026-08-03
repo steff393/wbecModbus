@@ -1,6 +1,6 @@
-# ModbusBridge – Anleitung für Nutzer
+# wbecModbus – Anleitung für Nutzer
 
-**ModbusBridge** liest Werte aus einem Modbus-TCP-Gerät (z.B. Wechselrichter) aus.
+**wbecModbus** liest Werte aus einem Modbus-TCP-Gerät (z.B. Wechselrichter) aus.
 Die Anwendung **liest nur** – am Gerät wird nichts verändert.
 
 > Die gleiche Anleitung findest du jederzeit in der Oberfläche über den Knopf
@@ -10,7 +10,7 @@ Die Anwendung **liest nur** – am Gerät wird nichts verändert.
 
 ## 1. Erste Schritte
 
-1. **ModbusBridge.exe** starten (Doppelklick). Ein kleines Konsolenfenster bleibt offen – bitte offen lassen, solange du das Programm nutzt.
+1. **wbecModbus.exe** starten (Doppelklick). Ein kleines Konsolenfenster bleibt offen – bitte offen lassen, solange du das Programm nutzt.
 2. Browser öffnen und `http://127.0.0.1:8765` aufrufen.
 3. Oben rechts zeigt der **Statuspunkt** den Zustand an: grün = bereit, gelb = arbeitet, rot = Fehler.
 
@@ -82,7 +82,7 @@ Einen **Wert** und eine **Toleranz** eingeben. Die Suche prüft alle Interpretat
 
 | Problem | Mögliche Lösung |
 |---|---|
-| **„Bridge nicht erreichbar"** | Läuft die ModbusBridge.exe noch? Ist die Adresse `http://127.0.0.1:8765` korrekt? |
+| **„Bridge nicht erreichbar"** | Läuft die wbecModbus.exe noch? Ist die Adresse `http://127.0.0.1:8765` korrekt? |
 | **Fehler / Timeout beim Lesen** | IP, Port und Unit ID prüfen. Gerät im selben Netzwerk und eingeschaltet? Firewall? |
 | **Nur Nullen / keine Werte** | Adressbereich stimmt evtl. nicht (Hersteller-Doku). Zwischen **Holding (FC03)** und **Input (FC04)** wechseln. |
 | **Werte wirken „komisch"** | Per Tooltip die passende Interpretation (int16, uint32, Kommazahl, …) wählen; ggf. Skalierung im Profil setzen. |

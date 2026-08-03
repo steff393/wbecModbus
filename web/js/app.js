@@ -524,7 +524,7 @@ function exportJson() {
 	const registers = {};
 	for (const a of addresses) registers[a] = state.registers[a];
 	const snapshot = {
-		meta: { app: "ModbusBridge", exported: new Date().toISOString(), ...config() },
+		meta: { app: "wbecModbus", exported: new Date().toISOString(), ...config() },
 		registers,
 	};
 	download(`modbus-${stamp()}.json`, JSON.stringify(snapshot, null, 2), "application/json");

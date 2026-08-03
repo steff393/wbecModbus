@@ -14,7 +14,7 @@ var webFS embed.FS
 
 const (
 	listenAddr = "127.0.0.1:8765"
-	version    = "0.5"
+	version    = "0.1.0"
 )
 
 func init() {
@@ -45,7 +45,7 @@ func main() {
 	flag.Parse()
 
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		sendJSON(w, map[string]string{"name": "ModbusBridge", "version": version})
+		sendJSON(w, map[string]string{"name": "wbecModbus", "version": version})
 	})
 
 	// Modbus (read-only)
@@ -59,6 +59,6 @@ func main() {
 
 	http.Handle("/", webRoot(*dev))
 
-	log.Printf("ModbusBridge %s running on http://%s", version, listenAddr)
+	log.Printf("wbecModbus %s running on http://%s", version, listenAddr)
 	log.Fatal(http.ListenAndServe(listenAddr, nil))
 }

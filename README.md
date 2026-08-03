@@ -1,16 +1,16 @@
-# ModbusBridge
+# wbecModbus
 
 Eine lokale Hardware-Bridge, die einen Browser mit **Modbus-TCP-Geräten** verbindet – z.B.
 um einen Wechselrichter auszulesen, ohne zusätzliche Software installieren zu müssen.
 
-Die Anwendung besteht aus einer kleinen portablen `ModbusBridge.exe`, die
+Die Anwendung besteht aus einer kleinen portablen `wbecModbus.exe`, die
 
 1. eine lokale HTTP-API bereitstellt,
 2. die Weboberfläche ausliefert (in die EXE eingebettet) und
 3. per Modbus TCP mit dem Gerät kommuniziert.
 
 ```
-Browser  ──HTTP──►  127.0.0.1:8765 (ModbusBridge.exe)  ──Modbus TCP──►  Wechselrichter
+Browser  ──HTTP──►  127.0.0.1:8765 (wbecModbus.exe)  ──Modbus TCP──►  Wechselrichter
 ```
 
 Die Bridge lauscht **ausschließlich auf `127.0.0.1:8765`** und ist damit nicht aus dem
@@ -24,14 +24,14 @@ keine Geräteparameter verändert werden.
 Voraussetzung: Go (siehe `go.mod`). Einzige Abhängigkeit: `github.com/goburrow/modbus`.
 
 ```sh
-go build          # erzeugt ModbusBridge.exe (bzw. modbus-bridge unter Linux)
+go build          # erzeugt wbecModbus.exe (bzw. wbecmodbus unter Linux)
 go run .          # bauen + starten in einem Schritt
 go run . -dev     # Entwicklung: web/ wird von der Platte geladen (Datei ändern + Browser neu laden, kein Rebuild)
 ```
 
 Nach dem Start im Browser öffnen: <http://127.0.0.1:8765>
 
-Die Weboberfläche ist per `//go:embed` in die EXE eingebettet – die fertige `ModbusBridge.exe`
+Die Weboberfläche ist per `//go:embed` in die EXE eingebettet – die fertige `wbecModbus.exe`
 ist somit eine **einzelne portable Datei**. Nur der `profiles/`-Ordner wird zur Laufzeit neben
 der EXE angelegt/gelesen.
 
@@ -108,7 +108,7 @@ das `success`-Flag aus.
 
 ### `GET /ping`
 ```json
-{ "name": "ModbusBridge", "version": "0.5" }
+{ "name": "wbecModbus", "version": "v0.1.0" }
 ```
 
 ### `POST /modbus/read`

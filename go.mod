@@ -1,4 +1,4 @@
-module modbus-bridge
+module wbecmodbus
 
 go 1.26.5
 

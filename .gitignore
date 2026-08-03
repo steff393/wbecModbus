@@ -2,7 +2,7 @@
 *.exe
 
 # Linux binaries
-/modbus-bridge
+/wbecmodbus
 
 # Build output
 /bin/
