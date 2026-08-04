@@ -122,7 +122,7 @@ Antwort:
 
 ### `POST /modbus/scan`
 ```json
-{ "ip": "192.168.178.63", "port": 502, "unit": 247, "function": 3, "from": 30000, "to": 31000 }
+{ "ip": "192.168.178.63", "port": 502, "unit": 247, "function": 3, "from": 35000, "to": 36000 }
 ```
 Blockgröße max. 125 Register, 100 ms Pause zwischen Requests, max. Spannweite 10000.
 

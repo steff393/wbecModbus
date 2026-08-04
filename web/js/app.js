@@ -202,21 +202,16 @@ function flashRow(addr) {
 async function pollWatch() {
 	const addrs = [...state.watch].sort((a, b) => a - b);
 	if (addrs.length === 0) return;
-	const min = addrs[0];
-	const max = addrs[addrs.length - 1] + 1; // +1 so 32-bit values are covered
-	const span = max - min + 1;
+
 	try {
 		let data = {};
-		if (span <= 125) {
-			const res = await api.readRegisters(config(), min, span);
-			if (!res.success) return setStatus("err", res.error);
-			data = res.data;
-		} else {
-			// Watched addresses spread too far for one request — read each.
-			for (const a of addrs) {
-				const res = await api.readRegisters(config(), a, 2);
-				if (res.success) Object.assign(data, res.data);
+		for (const addr of addrs) {
+			const res = await api.readRegisters(config(), addr, 1);
+			if (!res.success) {
+				setStatus("err", res.error);
+				return;
 			}
+			Object.assign(data, res.data);
 		}
 		diffAndMerge(data);
 		renderTable();
@@ -234,7 +229,7 @@ function startPolling() {
 		setStatus("err", "Keine Register markiert");
 		return;
 	}
-	const interval = Math.max(200, Number($("pollInterval").value) || 1000);
+	const interval = Math.max(200, Number($("pollInterval").value) || 5000);
 	pollWatch();
 	state.pollTimer = setInterval(pollWatch, interval);
 	$("pollToggle").textContent = "■ Stoppen";
