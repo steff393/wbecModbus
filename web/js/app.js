@@ -577,12 +577,21 @@ async function loadProfiles(selectName) {
 function applySelectedProfile() {
 	const name = $("profileSelect").value;
 	const profile = state.profiles.find((p) => p.name === name) || null;
+	const currentIp = $("ip").value.trim();
+	const currentPort = $("port").value.trim();
+	const currentUnit = $("unit").value.trim();
+	const currentFunction = $("function").value.trim();
 	state.activeProfile = profile;
 	if (profile) {
-		$("ip").value = profile.ip || "";
-		$("port").value = profile.port || 502;
-		$("unit").value = profile.unit ?? 247;
-		$("function").value = profile.function || 3;
+		$("ip").value = profile.ip ? profile.ip : currentIp;
+		$("port").value = profile.port !== undefined && profile.port !== null && profile.port !== "" ? profile.port : currentPort;
+		$("unit").value = profile.unit !== undefined && profile.unit !== null && profile.unit !== "" ? profile.unit : currentUnit;
+		$("function").value = profile.function !== undefined && profile.function !== null && profile.function !== "" ? profile.function : currentFunction;
+	} else {
+		$("ip").value = currentIp;
+		$("port").value = currentPort;
+		$("unit").value = currentUnit;
+		$("function").value = currentFunction;
 	}
 	renderProfileValues();
 	renderTable();
@@ -696,12 +705,19 @@ function collectEditorRegisters() {
 async function saveEditor() {
 	const name = $("edName").value.trim();
 	if (!name) return setStatus("err", "Profilname fehlt");
+	const currentPort = Number($("port").value) || 502;
+	const currentUnit = Number($("unit").value) || 0;
+	const currentFunction = Number($("function").value) || 3;
+	const effectiveIp = $("edIp").value.trim() || $("ip").value.trim();
+	const effectivePort = $("edPort").value.trim() !== "" ? Number($("edPort").value) || 502 : currentPort;
+	const effectiveUnit = $("edUnit").value.trim() !== "" ? Number($("edUnit").value) || 0 : currentUnit;
+	const effectiveFunction = $("edFunction").value.trim() !== "" ? Number($("edFunction").value) || 3 : currentFunction;
 	const profile = {
 		name,
-		ip: $("edIp").value.trim(),
-		port: Number($("edPort").value) || 502,
-		unit: Number($("edUnit").value) || 0,
-		function: Number($("edFunction").value) || 3,
+		ip: effectiveIp,
+		port: effectivePort,
+		unit: effectiveUnit,
+		function: effectiveFunction,
 		registers: collectEditorRegisters(),
 	};
 	const res = await api.saveProfile(profile);
