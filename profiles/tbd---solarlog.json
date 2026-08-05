@@ -1,0 +1,27 @@
+{
+  "name": "TBD - Solarlog",
+  "ip": "192.168.178.63",
+  "port": 502,
+  "unit": 1,
+  "function": 3,
+  "registers": [
+    {
+      "address": 3502,
+      "name": "Total AC Power PAC of all Inverters and Meters",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 3518,
+      "name": "Current total consumption PAC of all consumption meters",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    }
+  ]
+}
