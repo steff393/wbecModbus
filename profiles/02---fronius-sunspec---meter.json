@@ -1,0 +1,27 @@
+{
+  "name": "02 - Fronius (SunSpec) - Meter",
+  "ip": "",
+  "port": 502,
+  "unit": 240,
+  "function": 3,
+  "registers": [
+    {
+      "address": 40087,
+      "name": "Total Real Power",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 40091,
+      "name": "AC Real Power Scale Factor",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": ""
+    }
+  ]
+}

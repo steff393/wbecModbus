@@ -1,0 +1,27 @@
+{
+  "name": "04 - Huawei",
+  "ip": "",
+  "port": 502,
+  "unit": 1,
+  "function": 3,
+  "registers": [
+    {
+      "address": 37113,
+      "name": "Active Power",
+      "type": "int32",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 37765,
+      "name": "[Energystorage]Charge/Discharge power",
+      "type": "int32",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    }
+  ]
+}

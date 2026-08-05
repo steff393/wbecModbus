@@ -1,0 +1,27 @@
+{
+  "name": "11 - GoodWe",
+  "ip": "",
+  "port": 502,
+  "unit": 247,
+  "function": 3,
+  "registers": [
+    {
+      "address": 36025,
+      "name": "MTTotalActivepower",
+      "type": "int32",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 35183,
+      "name": "First Group Battery Power",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    }
+  ]
+}

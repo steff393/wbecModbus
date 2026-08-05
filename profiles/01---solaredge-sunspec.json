@@ -1,0 +1,54 @@
+{
+  "name": "01 - SolarEdge (SunSpec)",
+  "ip": "",
+  "port": 1502,
+  "unit": 1,
+  "function": 3,
+  "registers": [
+    {
+      "address": 40071,
+      "name": "AC Current",
+      "type": "uint16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "A"
+    },
+    {
+      "address": 40083,
+      "name": "AC Power Value",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 40084,
+      "name": "AC Power Scale Factor",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": ""
+    },
+    {
+      "address": 40206,
+      "name": "Total Real Power",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 40210,
+      "name": "AC Real Power Scale Factor",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": ""
+    }
+  ]
+}

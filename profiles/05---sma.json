@@ -1,0 +1,27 @@
+{
+  "name": "05 - SMA",
+  "ip": "",
+  "port": 502,
+  "unit": 1,
+  "function": 3,
+  "registers": [
+    {
+      "address": 30867,
+      "name": "Metering.GridMs.TotWOut",
+      "type": "int32",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 30865,
+      "name": "Metering.GridMs.TotWIn",
+      "type": "int32",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    }
+  ]
+}

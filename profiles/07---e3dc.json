@@ -1,0 +1,18 @@
+{
+  "name": "07 - E3DC",
+  "ip": "",
+  "port": 502,
+  "unit": 1,
+  "function": 3,
+  "registers": [
+    {
+      "address": 40074,
+      "name": "Leistung am Netzübergabepunkt",
+      "type": "int32",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    }
+  ]
+}

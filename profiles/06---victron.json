@@ -1,0 +1,45 @@
+{
+  "name": "06 - Victron",
+  "ip": "",
+  "port": 502,
+  "unit": 100,
+  "function": 3,
+  "registers": [
+    {
+      "address": 820,
+      "name": "Grid L1 - Power",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 821,
+      "name": "Grid L2 - Power",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 822,
+      "name": "Grid L3 - Power",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 842,
+      "name": "Battery - Power",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    }
+  ]
+}

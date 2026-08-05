@@ -1,0 +1,25 @@
+{
+  "name": "14 - GoodWe ET",
+  "ip": "",
+  "port": 502,
+  "unit": 247,
+  "function": 3,
+  "registers": [
+    {
+      "address": 35140,
+      "name": "AC ActivePower",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "unit": "W"
+    },
+    {
+      "address": 35121,
+      "name": "R phase Grid Voltage",
+      "type": "uint16",
+      "endian": "big",
+      "scale": 0.1,
+      "unit": "V"
+    }
+  ]
+}

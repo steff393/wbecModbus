@@ -1,0 +1,18 @@
+{
+  "name": "09 - Fronius (PV power as float, Waldmann) - Inverter",
+  "ip": "",
+  "port": 502,
+  "unit": 1,
+  "function": 3,
+  "registers": [
+    {
+      "address": 500,
+      "name": "F_Site_Power",
+      "type": "uint32",
+      "endian": "little",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    }
+  ]
+}

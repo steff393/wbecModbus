@@ -1,0 +1,18 @@
+{
+  "name": "09 - Fronius (PV power as float, Waldmann) - Meter",
+  "ip": "",
+  "port": 502,
+  "unit": 240,
+  "function": 3,
+  "registers": [
+    {
+      "address": 40096,
+      "name": "AC Power Value",
+      "type": "float32",
+      "endian": "little",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    }
+  ]
+}

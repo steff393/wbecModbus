@@ -1,0 +1,27 @@
+{
+  "name": "13 - AlphaESS",
+  "ip": "",
+  "port": 502,
+  "unit": 85,
+  "function": 3,
+  "registers": [
+    {
+      "address": 33,
+      "name": "Total Active Power",
+      "type": "int32",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    },
+    {
+      "address": 294,
+      "name": "Battery Power",
+      "type": "int16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
+    }
+  ]
+}

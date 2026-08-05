@@ -1,0 +1,27 @@
+{
+  "name": "10 - SAX",
+  "ip": "",
+  "port": 3600,
+  "unit": 64,
+  "function": 3,
+  "registers": [
+    {
+      "address": 47,
+      "name": "Leistung P vom Speicher",
+      "type": "uint16",
+      "endian": "big",
+      "scale": 1,
+      "offset": -16384,
+      "unit": "W"
+    },
+    {
+      "address": 48,
+      "name": "Leistung des Smartmeters",
+      "type": "uint16",
+      "endian": "big",
+      "scale": 1,
+      "offset": -16384,
+      "unit": "W"
+    }
+  ]
+}

@@ -681,6 +681,7 @@ function renderEditorRegisters() {
 		</select>
 	</td>
 	<td><input class="mono" data-ed="scale" data-i="${i}" value="${r.scale ?? 1}"></td>
+	<td><input class="mono" data-ed="offset" data-i="${i}" value="${r.offset ?? 0}"></td>
 	<td><input data-ed="unit" data-i="${i}" value="${r.unit || ""}"></td>
 	<td><button class="btn btn--ghost btn--sm" data-delrow="${i}">✕</button></td>
 </tr>`
@@ -698,6 +699,7 @@ function collectEditorRegisters() {
 			type: r.type || "uint16",
 			endian: r.endian || "big",
 			scale: Number(r.scale) || 1,
+			offset: Number(r.offset) || 0,
 			unit: r.unit || "",
 		}));
 }
@@ -788,7 +790,7 @@ function wire() {
 	$("btnProfileDelete").addEventListener("click", deleteActiveProfile);
 
 	$("edAddRow").addEventListener("click", () => {
-		state.editRegisters.push({ address: "", name: "", type: "uint16", endian: "big", scale: 1, unit: "" });
+		state.editRegisters.push({ address: "", name: "", type: "uint16", endian: "big", scale: 1, offset: 0, unit: "" });
 		renderEditorRegisters();
 	});
 	$("edSave").addEventListener("click", saveEditor);

@@ -96,7 +96,8 @@ export function interpretDef(def, regs) {
 	if (a === undefined) return null;
 	const b = regs[def.address + 1];
 	const little = def.endian === "little";
-	const scale = def.scale || 1;
+	const scale = Number.isFinite(Number(def.scale)) ? Number(def.scale) : 1;
+	const offset = Number.isFinite(Number(def.offset)) ? Number(def.offset) : 0;
 
 	let raw;
 	switch (def.type) {
@@ -121,7 +122,7 @@ export function interpretDef(def, regs) {
 		default:
 			raw = a;
 	}
-	return raw * scale;
+	return raw * scale + offset;
 }
 
 // How many registers a definition consumes (2 for 32-bit types, else 1).

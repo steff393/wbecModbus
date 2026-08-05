@@ -21,7 +21,8 @@ type RegisterDef struct {
 	Name    string  `json:"name"`
 	Type    string  `json:"type"`   // uint16 | int16 | uint32 | int32 | float32
 	Endian  string  `json:"endian"` // big | little (word order for 32-bit types)
-	Scale   float64 `json:"scale"`  // physical = raw * scale
+	Scale   float64 `json:"scale"`  // physical = raw * scale + offset
+	Offset  float64 `json:"offset"` // physical = raw * scale + offset
 	Unit    string  `json:"unit"`
 }
 
