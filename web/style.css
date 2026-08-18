@@ -107,6 +107,18 @@ input, select {
 input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(43,138,224,.15); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
 
+/* ---------- Combobox (text input + custom dropdown, e.g. IP history) ---------- */
+.combo { position: relative; }
+.combo__list {
+	list-style: none; margin: 0; padding: .3rem 0;
+	position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
+	background: #ffffff; border: 1px solid var(--border); border-radius: 7px;
+	box-shadow: var(--shadow);
+	max-height: 220px; overflow-y: auto;
+}
+.combo__item { padding: .4rem .6rem; font-size: .85rem; cursor: pointer; }
+.combo__item:hover, .combo__item--active { background: var(--bg-2); }
+
 /* ---------- Buttons ---------- */
 .btn {
 	display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
@@ -170,6 +182,10 @@ td.addr { font-weight: 600; }
 /* flash animation for refreshed rows */
 @keyframes flash { from { background: rgba(43,138,224,.28); } to { background: transparent; } }
 tr.flash { animation: flash 1s ease-out; }
+
+.profile-bar { display: flex; align-items: flex-end; gap: .8rem; flex-wrap: wrap; }
+.profile-bar__select { flex: 1; min-width: 200px; margin: 0; }
+.profile-bar .btn-row { margin-bottom: .05rem; }
 
 .search-bar { display: flex; align-items: flex-end; gap: .8rem; flex-wrap: wrap; margin-bottom: .8rem; }
 .search-bar label { margin: 0; }

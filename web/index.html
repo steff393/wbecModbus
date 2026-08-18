@@ -31,8 +31,12 @@
 
 		<section class="card">
 			<h2>Verbindung</h2>
-			<label>IP-Adresse <input id="ip" value="192.168.178.63" list="ipHistory" autocomplete="off"></label>
-			<datalist id="ipHistory"></datalist>
+			<label>IP-Adresse
+				<div class="combo" id="ipCombo">
+					<input id="ip" value="192.168.178.63" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="ipList">
+					<ul class="combo__list hidden" id="ipList" role="listbox"></ul>
+				</div>
+			</label>
 			<div class="grid-2">
 				<label>Port <input id="port" value="502"></label>
 				<label>Unit ID <input id="unit" value="247"></label>
@@ -43,19 +47,6 @@
 					<option value="4">Input Register (FC04)</option>
 				</select>
 			</label>
-		</section>
-
-		<section class="card">
-			<h2>Profil</h2>
-			<label>Gerät
-				<select id="profileSelect"></select>
-			</label>
-			<div class="btn-row">
-				<button class="btn btn--sm" id="btnProfileRead">Profil lesen</button>
-				<button class="btn btn--ghost btn--sm" id="btnProfileNew">Neu</button>
-				<button class="btn btn--ghost btn--sm" id="btnProfileEdit">Bearbeiten</button>
-				<button class="btn btn--ghost btn--sm" id="btnProfileDelete">Löschen</button>
-			</div>
 		</section>
 
 		<section class="card">
@@ -94,6 +85,23 @@
 
 	<!-- Content -->
 	<section class="content">
+
+		<div class="card">
+			<div class="card__head">
+				<h2>Profil</h2>
+			</div>
+			<div class="profile-bar">
+				<label class="profile-bar__select">Gerät
+					<select id="profileSelect"></select>
+				</label>
+				<div class="btn-row">
+					<button class="btn btn--sm" id="btnProfileRead">Profil lesen</button>
+					<button class="btn btn--ghost btn--sm" id="btnProfileNew">Neu</button>
+					<button class="btn btn--ghost btn--sm" id="btnProfileEdit">Bearbeiten</button>
+					<button class="btn btn--ghost btn--sm" id="btnProfileDelete">Löschen</button>
+				</div>
+			</div>
+		</div>
 
 		<div class="card">
 			<div class="card__head">
@@ -225,7 +233,7 @@
 				<li><b>Unit ID:</b> Geräte-/Slave-Adresse laut Hersteller (z.B. <code>247</code>).</li>
 				<li><b>Function:</b> <b>Holding (FC03)</b> oder <b>Input (FC04)</b> – je nach Register laut Hersteller-Doku. Im Zweifel beides probieren.</li>
 			</ul>
-			<p class="help__tip">Tipp: Am schnellsten geht es über ein <b>Profil</b> (links oben) – damit werden alle Verbindungsfelder automatisch gefüllt.</p>
+			<p class="help__tip">Tipp: Am schnellsten geht es über ein <b>Profil</b> (rechts oben, über der Suche) – damit werden alle Verbindungsfelder automatisch gefüllt.</p>
 
 			<h3>3. Register lesen</h3>
 			<ul>
@@ -291,6 +299,7 @@
 		</div>
 
 		<div class="modal__foot">
+			<button class="btn btn--ghost" id="btnClearStorage" title="Entfernt z.B. die gemerkten IP-Adressen – zum Testen des Neu-Nutzer-Zustands">LocalStorage löschen</button>
 			<button class="btn btn--primary" id="helpClose2">Verstanden</button>
 		</div>
 	</div>

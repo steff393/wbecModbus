@@ -37,11 +37,20 @@ function config() {
 }
 
 // ---------------------------------------------------------------------------
-// IP-Adresse: Verlauf (Dropdown mit freier Texteingabe via <datalist>)
+// IP-Adresse: Verlauf + Combobox (Texteingabe mit eigenem Dropdown)
+//
+// <input list> + <datalist> wurde bewusst nicht verwendet: Browser filtern dessen
+// Vorschläge selbst nach dem bereits im Feld stehenden Text, wodurch bei vorausgefülltem
+// Feld kaum noch Einträge sichtbar sind. Das eigene Dropdown zeigt stattdessen immer den
+// kompletten Verlauf (kein Teilstring-Filter): bei wenigen Geräten mit ähnlichen Adressen
+// (gleiches Subnetz) bringt Filtern nach Tippbeginn ohnehin nichts.
 // ---------------------------------------------------------------------------
 
 const IP_HISTORY_KEY = "wbecModbus.ipHistory";
 const IP_HISTORY_MAX = 10;
+
+let ipActiveIndex = -1; // per Tastatur hervorgehobener Eintrag im Dropdown, -1 = keiner
+let ipVisibleItems = []; // aktuell im Dropdown angezeigte IPs (Referenz für Tastatur/Auswahl)
 
 function loadIpHistory() {
 	try {
@@ -52,17 +61,87 @@ function loadIpHistory() {
 	}
 }
 
-function renderIpHistory(history) {
-	$("ipHistory").innerHTML = history.map((ip) => `<option value="${ip}">`).join("");
-}
-
-// Adds/moves an IP to the front of the remembered list and refreshes the datalist.
+// Adds/moves an IP to the front of the remembered list.
 function rememberIp(ip) {
 	ip = ip.trim();
 	if (!ip) return;
 	const history = [ip, ...loadIpHistory().filter((v) => v !== ip)].slice(0, IP_HISTORY_MAX);
 	localStorage.setItem(IP_HISTORY_KEY, JSON.stringify(history));
-	renderIpHistory(history);
+}
+
+function openIpDropdown() {
+	ipActiveIndex = -1;
+	ipVisibleItems = loadIpHistory();
+	if (ipVisibleItems.length === 0) return closeIpDropdown();
+	renderIpDropdown();
+}
+
+function renderIpDropdown() {
+	$("ipList").innerHTML = ipVisibleItems
+		.map(
+			(ip, i) =>
+				`<li class="combo__item${i === ipActiveIndex ? " combo__item--active" : ""}" role="option" data-ip="${ip}">${ip}</li>`
+		)
+		.join("");
+	$("ipList").classList.remove("hidden");
+	$("ip").setAttribute("aria-expanded", "true");
+}
+
+function closeIpDropdown() {
+	$("ipList").classList.add("hidden");
+	$("ip").setAttribute("aria-expanded", "false");
+	ipActiveIndex = -1;
+	ipVisibleItems = [];
+}
+
+function selectIp(ip) {
+	$("ip").value = ip;
+	rememberIp(ip);
+	closeIpDropdown();
+}
+
+function wireIpCombo() {
+	const input = $("ip");
+	const list = $("ipList");
+
+	// "focus" allows Tab into the field (no click involved); "click" covers re-clicking
+	// a field that's already focused, which doesn't re-fire "focus".
+	input.addEventListener("focus", openIpDropdown);
+	input.addEventListener("click", openIpDropdown);
+	input.addEventListener("change", () => rememberIp(input.value));
+	input.addEventListener("keydown", (e) => {
+		if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+			e.preventDefault();
+			if ($("ipList").classList.contains("hidden")) return openIpDropdown();
+			if (ipVisibleItems.length === 0) return;
+			const dir = e.key === "ArrowDown" ? 1 : -1;
+			ipActiveIndex = (ipActiveIndex + dir + ipVisibleItems.length) % ipVisibleItems.length;
+			renderIpDropdown();
+		} else if (e.key === "Enter") {
+			if (ipActiveIndex >= 0 && ipVisibleItems[ipActiveIndex]) {
+				e.preventDefault();
+				selectIp(ipVisibleItems[ipActiveIndex]);
+			}
+		} else if (e.key === "Escape") {
+			closeIpDropdown();
+		}
+	});
+	input.addEventListener("blur", () => setTimeout(closeIpDropdown, 150));
+
+	// mousedown (not click) fires before the input's blur, so the list is still open when we read it.
+	list.addEventListener("mousedown", (e) => {
+		e.preventDefault();
+		const li = e.target.closest("[data-ip]");
+		if (li) selectIp(li.dataset.ip);
+	});
+}
+
+// Wipes all app data from localStorage (e.g. the IP history) — lets a developer see the app as a new user would.
+function clearLocalStorage() {
+	if (!confirm("LocalStorage wirklich löschen? (z.B. gemerkte IP-Adressen)")) return;
+	localStorage.clear();
+	closeIpDropdown();
+	setStatus("ok", "LocalStorage gelöscht");
 }
 
 function setStatus(kind, text) {
@@ -779,14 +858,14 @@ function wire() {
 	$("btnSearch").addEventListener("click", runSearch);
 	$("pollToggle").addEventListener("click", togglePolling);
 
-	renderIpHistory(loadIpHistory());
-	$("ip").addEventListener("change", () => rememberIp($("ip").value));
+	wireIpCombo();
 
 	// Help / manual.
 	const help = $("help");
 	$("btnHelp").addEventListener("click", () => help.classList.remove("hidden"));
 	$("helpClose").addEventListener("click", () => help.classList.add("hidden"));
 	$("helpClose2").addEventListener("click", () => help.classList.add("hidden"));
+	$("btnClearStorage").addEventListener("click", clearLocalStorage);
 	help.addEventListener("click", (e) => {
 		if (e.target === help) help.classList.add("hidden"); // click on backdrop
 	});
