@@ -48,6 +48,10 @@ func main() {
 		sendJSON(w, map[string]string{"name": "wbecModbus", "version": version})
 	})
 
+	if err := ensureProfilesDir(profilesDir, embeddedProfiles); err != nil {
+		log.Fatal(err)
+	}
+
 	// Modbus (read-only)
 	http.HandleFunc("/modbus/read", handleRead)
 	http.HandleFunc("/modbus/scan", handleScan)

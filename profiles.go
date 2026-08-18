@@ -1,15 +1,21 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 )
+
+//go:embed profiles/*.json
+var embeddedProfiles embed.FS
 
 // profilesDir holds one JSON file per device profile, next to the executable.
 const profilesDir = "profiles"
@@ -37,6 +43,44 @@ type Profile struct {
 }
 
 var slugCleaner = regexp.MustCompile(`[^a-z0-9_-]+`)
+
+func ensureProfilesDir(baseDir string, profileFS fs.FS) error {
+	if err := os.MkdirAll(baseDir, 0o755); err != nil {
+		return err
+	}
+
+	entries, err := fs.ReadDir(profileFS, "profiles")
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+
+		sourcePath := path.Join("profiles", entry.Name())
+		targetPath := filepath.Join(baseDir, entry.Name())
+		if _, statErr := os.Stat(targetPath); statErr == nil {
+			continue
+		} else if !errors.Is(statErr, os.ErrNotExist) {
+			return statErr
+		}
+
+		data, err := fs.ReadFile(profileFS, sourcePath)
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(targetPath, data, 0o644); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 // profileFileName turns a display name into a safe file name, preventing path
 // traversal from user-supplied names.

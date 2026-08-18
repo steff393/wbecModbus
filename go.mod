@@ -1,4 +1,4 @@
-module wbecmodbus
+module wbecModbus
 
 go 1.26.5
 
