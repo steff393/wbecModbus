@@ -36,6 +36,35 @@ function config() {
 	};
 }
 
+// ---------------------------------------------------------------------------
+// IP-Adresse: Verlauf (Dropdown mit freier Texteingabe via <datalist>)
+// ---------------------------------------------------------------------------
+
+const IP_HISTORY_KEY = "wbecModbus.ipHistory";
+const IP_HISTORY_MAX = 10;
+
+function loadIpHistory() {
+	try {
+		const raw = JSON.parse(localStorage.getItem(IP_HISTORY_KEY));
+		return Array.isArray(raw) ? raw : [];
+	} catch {
+		return [];
+	}
+}
+
+function renderIpHistory(history) {
+	$("ipHistory").innerHTML = history.map((ip) => `<option value="${ip}">`).join("");
+}
+
+// Adds/moves an IP to the front of the remembered list and refreshes the datalist.
+function rememberIp(ip) {
+	ip = ip.trim();
+	if (!ip) return;
+	const history = [ip, ...loadIpHistory().filter((v) => v !== ip)].slice(0, IP_HISTORY_MAX);
+	localStorage.setItem(IP_HISTORY_KEY, JSON.stringify(history));
+	renderIpHistory(history);
+}
+
 function setStatus(kind, text) {
 	const el = $("status");
 	el.className = "status status--" + kind; // ok | err | busy | idle
@@ -584,6 +613,7 @@ function applySelectedProfile() {
 	state.activeProfile = profile;
 	if (profile) {
 		$("ip").value = profile.ip ? profile.ip : currentIp;
+		rememberIp($("ip").value);
 		$("port").value = profile.port !== undefined && profile.port !== null && profile.port !== "" ? profile.port : currentPort;
 		$("unit").value = profile.unit !== undefined && profile.unit !== null && profile.unit !== "" ? profile.unit : currentUnit;
 		$("function").value = profile.function !== undefined && profile.function !== null && profile.function !== "" ? profile.function : currentFunction;
@@ -748,6 +778,9 @@ function wire() {
 	$("btnScan").addEventListener("click", doScan);
 	$("btnSearch").addEventListener("click", runSearch);
 	$("pollToggle").addEventListener("click", togglePolling);
+
+	renderIpHistory(loadIpHistory());
+	$("ip").addEventListener("change", () => rememberIp($("ip").value));
 
 	// Help / manual.
 	const help = $("help");
