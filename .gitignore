@@ -24,3 +24,5 @@ Thumbs.db
 
 # Generated files
 /dist/
+# Go build keeps the replaced binary on Windows
+*.exe~
