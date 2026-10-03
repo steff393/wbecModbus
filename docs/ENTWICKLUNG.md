@@ -1,6 +1,6 @@
 # wbecModbus – Entwicklerdoku
 
-> Für Nutzer siehe [README.md](README.md) (Kurzanleitung) und [HILFE.md](HILFE.md) (ausführliche Anleitung).
+> Für Nutzer siehe [README.md](../README.md) (Kurzanleitung) und [HILFE.md](HILFE.md) (ausführliche Anleitung).
 
 Eine lokale Hardware-Bridge, die einen Browser mit **Modbus-TCP-Geräten** verbindet – z.B.
 um einen Wechselrichter auszulesen, ohne zusätzliche Software installieren zu müssen.

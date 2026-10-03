@@ -72,14 +72,6 @@ Die häufigsten Ursachen:
 
 ---
 
-## Hilfe bekommen
-
-Klicke auf **⧉ Bericht kopieren** (in „Gerät prüfen“ oder „Fehlersuche“) und füge den Text in deinen
-Forenbeitrag oder ein [GitHub-Issue](https://github.com/steff393/wbec/issues) ein. Er enthält alle
-Einstellungen, Werte und Fehlermeldungen, die zur Hilfe nötig sind.
-
----
-
 ## Für Fortgeschrittene: neuen Wechselrichter erforschen
 
 Wird dein Wechselrichter noch nicht unterstützt, kannst du im Modus **Register erforschen** selbst
@@ -102,5 +94,5 @@ herausfinden, wo seine Werte stehen:
 - **Portabel:** keine Installation, eine einzige Datei. Gespeicherte Profile landen im Ordner `profiles`
   neben der EXE.
 - **Beenden:** einfach das schwarze Fenster schließen.
-- **Ausführliche Anleitung:** [HILFE.md](HILFE.md) oder der Knopf **? Hilfe** oben rechts im Programm.
-- **Entwickler:** Aufbau, Build und HTTP-API stehen in [ENTWICKLUNG.md](ENTWICKLUNG.md).
+- **Ausführliche Anleitung:** [docs/HILFE.md](docs/HILFE.md) oder der Knopf **? Hilfe** oben rechts im Programm.
+- **Entwickler:** Aufbau, Build und HTTP-API stehen in [docs/ENTWICKLUNG.md](docs/ENTWICKLUNG.md).
