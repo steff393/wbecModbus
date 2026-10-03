@@ -12,25 +12,18 @@
       "endian": "big",
       "scale": 1,
       "offset": 0,
-      "unit": "A"
+      "unit": "A",
+      "scaleRegister": 40075
     },
     {
       "address": 40083,
-      "name": "AC Power Value",
+      "name": "AC Power",
       "type": "int16",
       "endian": "big",
       "scale": 1,
       "offset": 0,
-      "unit": "W"
-    },
-    {
-      "address": 40084,
-      "name": "AC Power Scale Factor",
-      "type": "int16",
-      "endian": "big",
-      "scale": 1,
-      "offset": 0,
-      "unit": ""
+      "unit": "W",
+      "scaleRegister": 40084
     },
     {
       "address": 40206,
@@ -39,16 +32,8 @@
       "endian": "big",
       "scale": 1,
       "offset": 0,
-      "unit": "W"
-    },
-    {
-      "address": 40210,
-      "name": "AC Real Power Scale Factor",
-      "type": "int16",
-      "endian": "big",
-      "scale": 1,
-      "offset": 0,
-      "unit": ""
+      "unit": "W",
+      "scaleRegister": 40210
     }
   ]
 }

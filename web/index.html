@@ -4,6 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>wbecModbus – Modbus Explorer</title>
+	<link rel="icon" href="favicon.svg" type="image/svg+xml">
 	<link rel="stylesheet" href="style.css">
 </head>
 
@@ -24,282 +25,421 @@
 	</div>
 </header>
 
-<main class="layout">
+<main class="page">
 
-	<!-- Sidebar -->
-	<aside class="sidebar">
-
-		<section class="card">
-			<h2>Verbindung</h2>
-			<label>IP-Adresse
+	<!-- Connection bar: shared by all modes -->
+	<section class="card conn">
+		<div class="card__head">
+			<h2>Verbindung zum Wechselrichter</h2>
+			<span class="muted">gilt für alle Modi</span>
+		</div>
+		<div class="conn__grid">
+			<div class="field">
+				<label class="field__label" for="profileSelect">Wechselrichter-Typ</label>
+				<div class="field-row">
+					<select id="profileSelect"></select>
+					<button class="btn btn--ghost btn--icon hidden" id="btnProfileEdit" title="Profil bearbeiten">✎</button>
+				</div>
+			</div>
+			<div class="field">
+				<label class="field__label" for="ip">IP-Adresse</label>
 				<div class="combo" id="ipCombo">
-					<input id="ip" value="192.168.178.63" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="ipList">
+					<input id="ip" placeholder="z. B. 192.168.178.63" autocomplete="off" spellcheck="false"
+						role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="ipList">
 					<ul class="combo__list hidden" id="ipList" role="listbox"></ul>
 				</div>
-			</label>
-			<div class="grid-2">
-				<label>Port <input id="port" value="502"></label>
-				<label>Unit ID <input id="unit" value="247"></label>
 			</div>
-			<label>Function
+			<button class="btn conn__test" id="btnTest">Verbindung testen</button>
+		</div>
+		<div class="conn__meta">
+			<span class="chips" id="connChips"></span>
+			<span class="muted" id="connSource"></span>
+			<button class="link" id="btnConnAdjust">anpassen</button>
+			<span class="test-result hidden" id="testResult"></span>
+		</div>
+		<div class="conn__adv hidden" id="connAdvanced">
+			<label>Port <input id="port" inputmode="numeric"></label>
+			<label>Unit-ID <input id="unit" inputmode="numeric"></label>
+			<label>Register-Typ
 				<select id="function">
-					<option value="3">Holding Register (FC03)</option>
-					<option value="4">Input Register (FC04)</option>
+					<option value="3">Holding-Register (FC03)</option>
+					<option value="4">Input-Register (FC04)</option>
 				</select>
 			</label>
-		</section>
+			<button class="link hidden" id="btnConnReset">auf Profilwerte zurücksetzen</button>
+		</div>
+	</section>
 
-		<section class="card">
-			<h2>Lesen</h2>
-			<div class="grid-2">
-				<label>Start <input id="start" value="35000"></label>
-				<label>Anzahl <input id="count" value="20"></label>
-			</div>
-			<button class="btn" id="btnRead">Register lesen</button>
-		</section>
+	<!-- Mode switcher -->
+	<nav class="modes-band" aria-label="Was möchtest du tun?">
+		<div class="modes-band__title">Was möchtest du tun?</div>
+		<div class="modes" role="tablist">
+			<button class="mode" data-mode="check" role="tab">
+				<span class="mode__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>
+				<span class="mode__text">
+					<span class="mode__title">Gerät prüfen</span>
+					<span class="mode__sub">Liest wbec meinen Wechselrichter? Werte per Profil lesen.</span>
+				</span>
+			</button>
+			<button class="mode" data-mode="diagnose" role="tab">
+				<span class="mode__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4v6a4 4 0 0 0 8 0V4"/><path d="M10 14v2a4 4 0 0 0 8 0v-3"/><circle cx="18" cy="11" r="2"/></svg></span>
+				<span class="mode__text">
+					<span class="mode__title">Fehlersuche</span>
+					<span class="mode__sub">wbec zeigt keine oder falsche Werte – Ursache finden.</span>
+				</span>
+			</button>
+			<button class="mode" data-mode="explore" role="tab">
+				<span class="mode__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/><path d="M8 10.5h5M10.5 8v5"/></svg></span>
+				<span class="mode__text">
+					<span class="mode__title">Register erforschen</span>
+					<span class="mode__sub">Neuer Wechselrichter-Typ – Register finden und ein Profil bauen.</span>
+				</span>
+			</button>
+		</div>
+	</nav>
 
-		<section class="card">
-			<h2>Scan</h2>
-			<div class="grid-2">
-				<label>Von <input id="scanFrom" value="35000"></label>
-				<label>Bis <input id="scanTo" value="36000"></label>
-			</div>
-			<button class="btn" id="btnScan">Bereich scannen</button>
-			<div class="progress hidden" id="scanProgress">
-				<div class="progress__track"><div class="progress__fill" id="scanBar"></div></div>
-				<span class="progress__text" id="scanText"></span>
-			</div>
-		</section>
-
-		<section class="card">
-			<h2>Zyklisch lesen <span class="pill" id="watchCount">0</span></h2>
-			<label>Intervall (ms) <input id="pollInterval" value="5000"></label>
-			<button class="btn" id="pollToggle">▶ Zyklisch lesen</button>
-			<table class="mini">
-				<thead><tr><th>Adr.</th><th>Roh</th><th>Wert</th><th></th></tr></thead>
-				<tbody id="watchTable"></tbody>
-			</table>
-		</section>
-
-	</aside>
-
-	<!-- Content -->
-	<section class="content">
-
+	<!-- Mode 1: Gerät prüfen -->
+	<section class="mode-panel" id="mode-check">
 		<div class="card">
-			<div class="card__head">
-				<h2>Profil</h2>
+			<div class="steps" id="checkSteps"></div>
+
+			<div class="hint-box hidden" id="checkNoProfile">
+				<p><b>Wähle oben deinen Wechselrichter-Typ</b> – denselben, den du in wbec einstellst. Danach die
+					IP-Adresse eintragen und „Werte lesen“ klicken.</p>
+				<p>Dein Wechselrichter steht nicht in der Liste? Dann hilft der Modus
+					<button class="link" id="checkGotoExplore">Register erforschen</button>.</p>
 			</div>
-			<div class="profile-bar">
-				<label class="profile-bar__select">Gerät
-					<select id="profileSelect"></select>
-				</label>
-				<div class="btn-row">
-					<button class="btn btn--sm" id="btnProfileRead">Profil lesen</button>
-					<button class="btn btn--ghost btn--sm" id="btnProfileNew">Neu</button>
-					<button class="btn btn--ghost btn--sm" id="btnProfileEdit">Bearbeiten</button>
-					<button class="btn btn--ghost btn--sm" id="btnProfileDelete">Löschen</button>
+
+			<div class="hidden" id="checkMain">
+				<div class="actionbar">
+					<button class="btn btn--primary" id="btnCheckRead">▶ Werte lesen</button>
+					<label class="chk"><input type="checkbox" id="checkLive"> Live</label>
+					<select class="select--sm" id="checkInterval" title="Leseintervall für Live">
+						<option value="2">alle 2 s</option>
+						<option value="5" selected>alle 5 s</option>
+						<option value="10">alle 10 s</option>
+						<option value="30">alle 30 s</option>
+					</select>
+					<span class="spacer"></span>
+					<button class="btn btn--ghost btn--sm" id="btnCheckReport" title="Ergebnis als Text für Forum oder GitHub kopieren">⧉ Bericht kopieren</button>
 				</div>
+				<div class="banner hidden" id="checkBanner"></div>
+				<div class="vcards" id="checkCards"></div>
+				<p class="hint">Karte anklicken = Verlauf anzeigen · Werte am besten mit der Hersteller-App vergleichen.</p>
 			</div>
 		</div>
 
-		<div class="card">
+		<div class="card hidden" id="checkDetail">
 			<div class="card__head">
-				<h2>Suche</h2>
+				<h2 id="checkDetailTitle">Verlauf</h2>
+				<div class="toolbar">
+					<button class="btn btn--ghost btn--sm" id="btnCheckDetailCsv">CSV ⭳</button>
+					<button class="btn btn--ghost btn--sm" id="btnCheckDetailClose" title="Verlauf schließen">✕</button>
+				</div>
 			</div>
-			<div class="search-bar">
-				<label>Wert <input id="searchValue" value="230"></label>
-				<label>Toleranz ± <input id="searchTol" value="5"></label>
-				<button class="btn btn--primary" id="btnSearch">Suchen</button>
-				<span class="muted" id="searchInfo"></span>
+			<div class="chart" id="checkChart"></div>
+			<p class="hint hidden" id="checkDetailHint">Für einen Verlauf „Live“ einschalten – dann wird regelmäßig gelesen.</p>
+		</div>
+	</section>
+
+	<!-- Mode 2: Fehlersuche -->
+	<section class="mode-panel hidden" id="mode-diagnose">
+		<div class="diag-grid">
+			<div class="card">
+				<div class="actionbar">
+					<button class="btn btn--primary" id="btnDiagRun">▶ Diagnose starten</button>
+					<span class="spacer"></span>
+					<button class="btn btn--ghost btn--sm" id="btnDiagReport" title="Ergebnis als Text für Forum oder GitHub kopieren">⧉ Bericht kopieren</button>
+				</div>
+				<p class="muted" id="diagIntro">Prüft nacheinander, ob das Gerät erreichbar ist, per Modbus antwortet und
+					die Register des gewählten Wechselrichter-Typs liefert. Beim ersten Problem hält die Diagnose an
+					und sagt, was zu tun ist.</p>
+				<div class="dsteps" id="diagSteps"></div>
+			</div>
+			<aside class="card">
+				<h2>Häufige Ursachen</h2>
+				<ul class="causes">
+					<li><b>Modbus TCP ist nicht aktiviert</b> – meist eine Einstellung im Hersteller-Portal, in der App oder am Display.</li>
+					<li><b>wbec ist gleichzeitig verbunden</b> – manche Geräte erlauben nur einen Modbus-Client. wbec kurz trennen und erneut prüfen.</li>
+					<li><b>Falsche Unit-ID</b> – häufig 1, 3, 100, 126 oder 247. Die Diagnose kann sie suchen.</li>
+					<li><b>Falscher Port</b> – meist 502, bei SolarEdge oft 1502.</li>
+					<li><b>Anderes Netz</b> – z. B. Gast-WLAN, VLAN oder eine Firewall dazwischen.</li>
+					<li><b>Gerät im Standby</b> – manche Wechselrichter antworten nachts nicht.</li>
+				</ul>
+			</aside>
+		</div>
+	</section>
+
+	<!-- Mode 3: Register erforschen -->
+	<section class="mode-panel hidden" id="mode-explore">
+		<div class="flow"><span>1 Bereich lesen</span>›<span>2 Wert suchen</span>›<span>3 Beobachten</span>›<span>4 Profil bauen</span></div>
+
+		<div class="grid-2col">
+			<div class="card">
+				<h2>1 · Bereich lesen</h2>
+				<div class="inline-form">
+					<label>Von <input id="rangeFrom" inputmode="numeric" value="35000"></label>
+					<label>Bis <input id="rangeTo" inputmode="numeric" value="35199"></label>
+					<button class="btn btn--primary" id="btnRange">Lesen</button>
+				</div>
+				<div class="progress hidden" id="rangeProgress">
+					<div class="progress__track"><div class="progress__fill" id="rangeBar"></div></div>
+					<span class="progress__text" id="rangeText"></span>
+				</div>
+				<p class="hint">Große Bereiche werden in 125er-Blöcken gelesen. Register, die das Gerät nicht kennt, werden übersprungen.</p>
+			</div>
+			<div class="card">
+				<h2>2 · Bekannten Wert suchen</h2>
+				<div class="inline-form">
+					<label>Wert <input id="searchValue" placeholder="z. B. 2345"></label>
+					<label>Toleranz ± <input id="searchTol" value="5"></label>
+					<button class="btn" id="btnSearch">Suchen</button>
+				</div>
+				<p class="hint">Einen aktuellen Wert eintragen, z. B. die PV-Leistung aus der Hersteller-App. Gesucht wird in
+					allen Datentypen und üblichen Skalierungen – 230 findet z. B. auch 2312 ×0,1.</p>
+				<p class="muted" id="searchInfo"></p>
+			</div>
+		</div>
+
+		<div class="card hidden" id="searchCard">
+			<div class="card__head">
+				<h2>Suchtreffer</h2>
+				<span class="muted" id="searchCount"></span>
 			</div>
 			<div class="table-scroll table-scroll--short">
 				<table>
-					<thead><tr>
-						<th>Adresse</th><th>Typ</th><th>Rohwert</th><th>Skalierung</th><th>Ergebnis</th>
-					</tr></thead>
+					<thead><tr><th>Adresse</th><th>Typ</th><th>Rohwert</th><th>Skalierung</th><th>Ergebnis</th><th></th></tr></thead>
 					<tbody id="searchTable"></tbody>
 				</table>
 			</div>
-			<p class="hint">Findet auch skalierte Treffer: <code>230</code> matcht z.B. <code>2328 ×0.1 = 232.8</code>.</p>
 		</div>
 
-		<div class="card hidden" id="profilePanel">
-			<div class="card__head">
-				<h2>Profil-Register – <span id="profilePanelName"></span></h2>
+		<div class="grid-main">
+			<div class="card">
+				<div class="card__head">
+					<h2>Register <span class="muted" id="regCount"></span></h2>
+					<div class="toolbar">
+						<label class="chk"><input type="checkbox" id="filterNonzero"> nur ≠ 0</label>
+						<label class="chk"><input type="checkbox" id="filterChanged"> nur geändert</label>
+						<button class="btn btn--ghost btn--sm" id="btnBaseline" title="Aktuelle Werte als Vergleichsbasis merken">Basis setzen</button>
+						<button class="btn btn--ghost btn--sm" id="btnExportCsv">CSV ⭳</button>
+						<button class="btn btn--ghost btn--sm" id="btnExportJson">JSON ⭳</button>
+						<button class="btn btn--ghost btn--sm" id="btnImport" title="Snapshot-JSON als Vergleichsbasis laden">Import ⭱</button>
+						<button class="btn btn--ghost btn--sm" id="btnClear" title="Registertabelle leeren">Leeren</button>
+						<input type="file" id="importFile" accept="application/json,.json" hidden>
+					</div>
+				</div>
+				<p class="hint">Zeile anklicken = Details mit allen Deutungen · Haken = beobachten · Maus darüber = Schnellansicht</p>
+				<div class="table-scroll">
+					<table class="reg-table">
+						<thead><tr>
+							<th class="col-check" title="beobachten">beob.</th><th>Adresse</th><th>Hex</th><th>uint16</th><th>int16</th><th>uint32 BE</th><th>float BE</th>
+						</tr></thead>
+						<tbody id="regTable"></tbody>
+					</table>
+				</div>
 			</div>
-			<div class="table-scroll table-scroll--short">
-				<table>
-					<thead><tr>
-						<th>Name</th><th>Adresse</th><th>Typ</th><th>Rohwert</th><th>Physikalisch</th>
-					</tr></thead>
-					<tbody id="profileValues"></tbody>
-				</table>
+
+			<div class="card">
+				<div class="card__head">
+					<h2>3 · Beobachten und Verlauf <span class="pill" id="watchCount">0</span></h2>
+				</div>
+				<div class="actionbar">
+					<button class="btn btn--primary" id="btnWatch">▶ Start</button>
+					<select class="select--sm" id="watchInterval" title="Leseintervall">
+						<option value="1">alle 1 s</option>
+						<option value="2">alle 2 s</option>
+						<option value="5" selected>alle 5 s</option>
+						<option value="10">alle 10 s</option>
+						<option value="30">alle 30 s</option>
+					</select>
+					<span class="spacer"></span>
+					<button class="btn btn--ghost btn--sm" id="btnWatchCsv" title="Verlauf als CSV exportieren">CSV ⭳</button>
+					<button class="btn btn--ghost btn--sm" id="btnWatchClear">Verlauf leeren</button>
+				</div>
+				<div class="watch-list" id="watchList"></div>
 			</div>
 		</div>
 
 		<div class="card">
 			<div class="card__head">
-				<h2>Register <span class="muted" id="tableCount"></span></h2>
+				<h2>4 · Profil bauen <span class="muted" id="draftCount"></span></h2>
 				<div class="toolbar">
-					<label class="chk"><input type="checkbox" id="filterNonzero"> nur ≠ 0</label>
-					<label class="chk"><input type="checkbox" id="filterChanged"> nur geändert</label>
-					<button class="btn btn--ghost btn--sm" id="btnBaseline" title="Aktuelle Werte als Vergleichsbasis merken">Basis setzen</button>
-					<button class="btn btn--ghost btn--sm" id="btnExportCsv">CSV ⭳</button>
-					<button class="btn btn--ghost btn--sm" id="btnExportJson">JSON ⭳</button>
-					<button class="btn btn--ghost btn--sm" id="btnImport" title="Snapshot-JSON als Vergleichsbasis laden">Import ⭱</button>
-					<button class="btn btn--ghost btn--sm" id="btnClear" title="Registertabelle leeren">Leeren</button>
-					<input type="file" id="importFile" accept="application/json,.json" hidden>
+					<button class="btn btn--ghost btn--sm" id="btnDraftFromProfile" title="Register des oben gewählten Wechselrichter-Typs als Ausgangspunkt nehmen">Aus gewähltem Profil</button>
+					<button class="btn btn--ghost btn--sm" id="btnDraftWatch" title="Alle Register des Entwurfs beobachten">Alle beobachten</button>
+					<button class="btn btn--ghost btn--sm" id="btnDraftJson">JSON ⭳</button>
+					<button class="btn btn--ghost btn--sm" id="btnDraftClear">Leeren</button>
+					<button class="btn btn--sm" id="btnDraftSave">Als Profil speichern …</button>
 				</div>
 			</div>
-			<p class="hint">Zeile <b>anklicken</b> = neu lesen · <b>Checkbox</b> = zyklisch beobachten · <b>Hover</b> = alle Interpretationen · geänderte Werte werden farbig hervorgehoben</p>
-			<div class="table-scroll">
-				<table class="reg-table">
+			<div class="table-scroll table-scroll--short">
+				<table class="editor-table">
 					<thead><tr>
-						<th></th><th>Adresse</th><th>Hex</th><th>uint16</th><th>int16</th><th>uint32 BE</th><th>float BE</th>
+						<th>Adresse</th><th>Name</th><th>Typ</th><th>Wortfolge</th><th>Skalierung</th>
+						<th title="SunSpec: Register mit dem Skalierungsfaktor SF (Wert × 10^SF)">SF-Register</th><th>Einheit</th><th></th>
 					</tr></thead>
-					<tbody id="table"></tbody>
+					<tbody id="draftTable"></tbody>
 				</table>
 			</div>
+			<p class="hint">Gefundene Register sammeln, benennen und als Profil speichern – das Profil steht danach oben als
+				Wechselrichter-Typ zur Verfügung. Den JSON-Export kannst du für die Umsetzung in wbec weitergeben.</p>
 		</div>
+	</section>
 
+	<!-- Request log: all modes -->
+	<section class="card log">
+		<div class="card__head">
+			<div class="log__title"><h2>Protokoll</h2><span class="chip" id="logCount"></span></div>
+			<div class="toolbar">
+				<button class="btn btn--ghost btn--sm hidden" id="logToggle"></button>
+				<button class="btn btn--ghost btn--sm" id="logCopy">⧉ Kopieren</button>
+				<button class="btn btn--ghost btn--sm" id="logClear">Leeren</button>
+			</div>
+		</div>
+		<div class="log__list mono" id="logList"></div>
 	</section>
 </main>
 
-<!-- Floating tooltip -->
+<!-- Floating tooltip (register table) -->
 <div id="tooltip" class="tooltip"></div>
+
+<!-- Register details -->
+<div class="modal hidden" id="details">
+	<div class="modal__box">
+		<div class="modal__head">
+			<h2 id="detailsTitle">Register</h2>
+			<button class="btn btn--ghost btn--sm" id="detailsClose" title="Schließen">✕</button>
+		</div>
+		<div id="detailsBody"></div>
+		<div class="modal__foot">
+			<button class="btn" id="detailsReload">↻ Neu lesen</button>
+			<button class="btn btn--primary" id="detailsClose2">Schließen</button>
+		</div>
+	</div>
+</div>
 
 <!-- Profile editor -->
 <div class="modal hidden" id="editor">
-	<div class="modal__box">
+	<div class="modal__box modal__box--wide">
 		<div class="modal__head">
-			<h2>Profil bearbeiten</h2>
-			<button class="btn btn--ghost btn--sm" id="edCancel">✕</button>
+			<h2 id="edTitle">Profil bearbeiten</h2>
+			<button class="btn btn--ghost btn--sm" id="edCancel" title="Schließen">✕</button>
 		</div>
-		<div class="grid-2">
-			<label>Name <input id="edName"></label>
-			<label>IP <input id="edIp"></label>
-			<label>Port <input id="edPort" value="502"></label>
-			<label>Unit ID <input id="edUnit" value="247"></label>
-			<label>Function
+		<div class="grid-4">
+			<label>Name <input id="edName" placeholder="z. B. 15 - Mein Wechselrichter"></label>
+			<label>Port <input id="edPort" inputmode="numeric"></label>
+			<label>Unit-ID <input id="edUnit" inputmode="numeric"></label>
+			<label>Register-Typ
 				<select id="edFunction">
-					<option value="3">FC03 (Holding)</option>
-					<option value="4">FC04 (Input)</option>
+					<option value="3">Holding (FC03)</option>
+					<option value="4">Input (FC04)</option>
 				</select>
 			</label>
 		</div>
+		<p class="hint">Port, Unit-ID und Register-Typ sind die Vorgaben dieses Wechselrichter-Typs. Die IP-Adresse merkt sich
+			wbecModbus getrennt davon in deinem Browser.</p>
 
 		<h3>Register</h3>
 		<div class="table-scroll table-scroll--short">
 			<table class="editor-table">
 				<thead><tr>
-					<th>Adresse</th><th>Name</th><th>Typ</th><th>Endian</th><th>Skalierung</th><th>Offset</th><th>Einheit</th><th></th>
+					<th>Adresse</th><th>Name</th><th>Typ</th><th>Wortfolge</th><th>Skalierung</th><th>Offset</th>
+					<th title="SunSpec: Register mit dem Skalierungsfaktor SF (Wert × 10^SF)">SF-Register</th><th>Einheit</th><th></th>
 				</tr></thead>
 				<tbody id="edRegisters"></tbody>
 			</table>
 		</div>
 		<button class="btn btn--ghost btn--sm" id="edAddRow">+ Register</button>
+		<p class="hint">Physikalischer Wert = Rohwert × Skalierung × 10^SF + Offset. Das SF-Register nur bei SunSpec-Geräten
+			eintragen, sonst leer lassen.</p>
+		<p class="form-error hidden" id="edError"></p>
 
 		<div class="modal__foot">
-			<button class="btn" id="edCancel2" onclick="document.getElementById('editor').classList.add('hidden')">Abbrechen</button>
+			<button class="btn btn--danger-ghost hidden" id="edDelete">Profil löschen</button>
+			<span class="spacer"></span>
+			<button class="btn" id="edCancel2">Abbrechen</button>
 			<button class="btn btn--primary" id="edSave">Speichern</button>
 		</div>
 	</div>
 </div>
 
-<!-- Hilfe / Anleitung -->
+<!-- Help / manual -->
 <div class="modal hidden" id="help">
 	<div class="modal__box modal__box--wide">
 		<div class="modal__head">
 			<h2>Anleitung &amp; Hilfe</h2>
-			<button class="btn btn--ghost btn--sm" id="helpClose">✕</button>
+			<button class="btn btn--ghost btn--sm" id="helpClose" title="Schließen">✕</button>
 		</div>
 
 		<div class="help">
-			<p><b>wbecModbus</b> liest Werte aus einem Modbus-TCP-Gerät (z.B. Wechselrichter) aus.
+			<p><b>wbecModbus</b> liest Werte aus einem Modbus-TCP-Gerät (z. B. Wechselrichter) aus.
 			Die Anwendung <b>liest nur</b> – am Gerät wird nichts verändert.</p>
 
 			<h3>1. Erste Schritte</h3>
 			<ul>
-				<li><b>wbecModbus.exe</b> starten (Doppelklick). Ein kleines Konsolenfenster bleibt offen – bitte offen lassen.</li>
-				<li>Browser öffnen und <code>http://127.0.0.1:8765</code> aufrufen.</li>
-				<li>Oben rechts zeigt der <b>Statuspunkt</b> den Zustand an: grün = bereit, gelb = arbeitet, rot = Fehler.</li>
+				<li><b>wbecModbus.exe</b> starten (Doppelklick). Das kleine Konsolenfenster bitte offen lassen.</li>
+				<li>Die Oberfläche öffnet sich automatisch im Browser. Falls nicht: Browser öffnen und <code>http://127.0.0.1:8765</code> aufrufen.</li>
+				<li>Oben rechts zeigt der <b>Statuspunkt</b> den Zustand: grün = ok, gelb = Hinweis oder arbeitet, rot = Fehler.</li>
 			</ul>
 
-			<h3>2. Verbindung einstellen</h3>
+			<h3>2. Verbindung (oben, gilt für alle Modi)</h3>
 			<ul>
-				<li><b>IP-Adresse:</b> Netzwerkadresse des Geräts (z.B. <code>192.168.178.63</code>).</li>
-				<li><b>Port:</b> meist <code>502</code>.</li>
-				<li><b>Unit ID:</b> Geräte-/Slave-Adresse laut Hersteller (z.B. <code>247</code>).</li>
-				<li><b>Function:</b> <b>Holding (FC03)</b> oder <b>Input (FC04)</b> – je nach Register laut Hersteller-Doku. Im Zweifel beides probieren.</li>
+				<li><b>Wechselrichter-Typ:</b> denselben Typ wählen wie in wbec. Port, Unit-ID und Register-Typ werden dann
+					automatisch übernommen.</li>
+				<li><b>IP-Adresse:</b> Adresse des Wechselrichters. Sie wird pro Typ gemerkt; ein Klick ins Feld zeigt die
+					zuletzt verwendeten Adressen.</li>
+				<li><b>anpassen:</b> Port, Unit-ID oder Register-Typ abweichend vom Profil einstellen. Auch das wird gemerkt.</li>
+				<li><b>Verbindung testen:</b> prüft mit einer einzelnen Anfrage, ob das Gerät antwortet.</li>
 			</ul>
-			<p class="help__tip">Tipp: Am schnellsten geht es über ein <b>Profil</b> (rechts oben, über der Suche) – damit werden alle Verbindungsfelder automatisch gefüllt.</p>
 
-			<h3>3. Register lesen</h3>
+			<h3>3. Modus „Gerät prüfen“</h3>
+			<p>Für bekannte Wechselrichter: Liest wbec mein Gerät? <b>Werte lesen</b> zeigt alle Werte des Profils als Karten
+			mit Einheit. Die Zusammenfassung darüber sagt ehrlich, ob alles, nur ein Teil oder nichts gelesen wurde.
+			<b>Live</b> liest regelmäßig; ein Klick auf eine Karte zeigt den Verlauf. <b>Bericht kopieren</b> erzeugt einen
+			Text für Forum oder GitHub.</p>
+
+			<h3>4. Modus „Fehlersuche“</h3>
+			<p><b>Diagnose starten</b> prüft der Reihe nach: wbecModbus läuft → Gerät im Netzwerk erreichbar → Modbus-Antwort
+			(Unit-ID) → Register-Typ → alle Profil-Register → Werte plausibel. Beim ersten Problem steht dort, was zu tun ist.
+			Passende Knöpfe suchen z. B. die richtige <b>Unit-ID</b> oder übernehmen den anderen <b>Register-Typ</b>.</p>
+
+			<h3>5. Modus „Register erforschen“</h3>
 			<ul>
-				<li>Unter <b>Lesen</b> eine <b>Start</b>-Adresse und die <b>Anzahl</b> eingeben, dann <b>„Register lesen"</b>.</li>
-				<li>Die Werte erscheinen rechts in der Tabelle <b>Register</b>.</li>
+				<li><b>1 · Bereich lesen:</b> Von/Bis eingeben – die Werte erscheinen in der Tabelle <b>Register</b>.</li>
+				<li><b>2 · Bekannten Wert suchen:</b> einen aktuellen Wert (z. B. aus der Hersteller-App) eingeben; gesucht wird in
+					allen Datentypen und Skalierungen. Beispiel: 230 (±5) findet 2312, weil 2312 × 0,1 = 231,2.</li>
+				<li><b>Tabelle:</b> Maus darüber = alle Deutungen, Klick = Details mit „beobachten“ und „ins Profil“.
+					Filter „nur ≠ 0“ und „nur geändert“ (nach „Basis setzen“). Export als CSV/JSON, Import eines Snapshots.</li>
+				<li><b>3 · Beobachten und Verlauf:</b> ausgewählte Register zyklisch lesen; jeder Wert bekommt ein Diagramm. Das hilft
+					bei der Deutung: Leistung schwankt mit Sonne und Last, Zählerstände steigen nur, Statuswerte springen.</li>
+				<li><b>4 · Profil bauen:</b> gefundene Register sammeln, benennen und als Profil speichern – oder als JSON für die
+					Umsetzung in wbec weitergeben.</li>
 			</ul>
 
-			<h3>4. Bereich scannen</h3>
-			<ul>
-				<li>Unter <b>Scan</b> einen Bereich <b>Von/Bis</b> eingeben und <b>„Bereich scannen"</b> drücken.</li>
-				<li>Ein <b>Fortschrittsbalken</b> zeigt den Stand; mit <b>„Abbrechen"</b> lässt sich der Scan jederzeit stoppen.</li>
-			</ul>
+			<h3>6. Protokoll</h3>
+			<p>Jede Anfrage an das Gerät erscheint unten im <b>Protokoll</b> – mit Ergebnis und Dauer, Fehler in Rot. Zusätzlich
+			stehen alle Anfragen in der Konsole des Browsers (F12).</p>
 
-			<h3>5. Die Registertabelle</h3>
-			<ul>
-				<li><b>Maus über eine Zeile:</b> Tooltip mit <b>allen Interpretationen</b> (hex, uint16/int16, uint32/int32, Kommazahl, …).</li>
-				<li><b>Zeile anklicken:</b> genau dieses Register wird <b>neu ausgelesen</b> (kurzes blaues Aufblinken).</li>
-				<li><b>Checkbox links:</b> Register zur <b>zyklischen Beobachtung</b> markieren.</li>
-				<li><b>Geänderte Werte</b> werden beim Aktualisieren <b>grün hervorgehoben</b>.</li>
-			</ul>
-
-			<h3>6. Zyklisch lesen (Live)</h3>
-			<ul>
-				<li>Register in der Tabelle per Checkbox markieren.</li>
-				<li>Links unter <b>„Zyklisch lesen"</b> ein <b>Intervall</b> (in Millisekunden) eingeben und starten – die Werte werden laufend aktualisiert. Erneut drücken zum Stoppen.</li>
-			</ul>
-
-			<h3>7. Filter</h3>
-			<ul>
-				<li><b>nur ≠ 0:</b> blendet Register mit dem Wert 0 aus.</li>
-				<li><b>nur geändert:</b> zeigt nur Register, die sich gegenüber einer <b>Basis</b> verändert haben. Zuerst <b>„Basis setzen"</b> drücken (oder einen Snapshot importieren), dann später erneut lesen.</li>
-			</ul>
-
-			<h3>8. Suche mit Toleranz</h3>
-			<p>Einen <b>Wert</b> und eine <b>Toleranz</b> eingeben. Die Suche prüft alle Interpretationen und gängige Skalierungen.
-			Beispiel: Suche nach <code>230</code> (Toleranz ±5) findet auch das Register <code>2328</code>, weil <code>2328 × 0,1 = 232,8</code> (also z.B. 232,8&nbsp;V).</p>
-
-			<h3>9. Export &amp; Import</h3>
-			<ul>
-				<li><b>CSV ⭳:</b> aktuelle Tabelle als Tabellendatei (für Excel).</li>
-				<li><b>JSON ⭳:</b> vollständiger Schnappschuss der Werte.</li>
-				<li><b>Import ⭱:</b> ein zuvor gespeichertes JSON laden – es dient dann als <b>Vergleichsbasis</b> für den Filter „nur geändert".</li>
-			</ul>
-
-			<h3>10. Geräteprofile</h3>
-			<ul>
-				<li><b>Auswählen:</b> Profil im Dropdown wählen → Verbindungsdaten werden gefüllt.</li>
-				<li><b>Profil lesen:</b> liest alle hinterlegten Register und zeigt die <b>physikalischen Werte</b> mit Einheit (z.B. Watt, Volt).</li>
-				<li><b>Neu / Bearbeiten:</b> eigene Register anlegen – je Register: Adresse, Name, Typ, Endianness, Skalierung (Wert × Skalierung) und Einheit. <b>Speichern</b> legt das Profil ab, <b>Löschen</b> entfernt es.</li>
-			</ul>
+			<h3>7. Profile und SunSpec</h3>
+			<p>Ein Profil enthält Port, Unit-ID, Register-Typ und die Register (Adresse, Typ, Wortfolge, Skalierung, Einheit).
+			Physikalischer Wert = Rohwert × Skalierung × 10^SF + Offset. Bei SunSpec-Geräten steht der Skalierungsfaktor SF in
+			einem eigenen Register – das trägt man als <b>SF-Register</b> ein, dann wird er automatisch eingerechnet.</p>
 
 			<h3>Problembehebung</h3>
 			<ul>
-				<li><b>„Bridge nicht erreichbar":</b> Läuft die wbecModbus.exe noch? Ist die Adresse <code>http://127.0.0.1:8765</code> korrekt?</li>
-				<li><b>Fehler / Timeout beim Lesen:</b> IP, Port und Unit ID prüfen. Ist das Gerät im selben Netzwerk und eingeschaltet? Blockiert eine Firewall die Verbindung?</li>
-				<li><b>Nur Nullen oder keine Werte:</b> Adressbereich stimmt evtl. nicht – die richtigen Adressen stehen in der Modbus-Doku des Herstellers. Ggf. zwischen <b>Holding (FC03)</b> und <b>Input (FC04)</b> wechseln.</li>
-				<li><b>Werte wirken „komisch":</b> per Tooltip die passende Interpretation (int16, uint32, Kommazahl, …) und ggf. eine Skalierung im Profil wählen.</li>
+				<li><b>„wbecModbus nicht erreichbar“:</b> Läuft die wbecModbus.exe noch? Ist die Adresse <code>http://127.0.0.1:8765</code> korrekt?</li>
+				<li><b>Keine Verbindung oder keine Antwort:</b> den Modus <b>Fehlersuche</b> verwenden.</li>
+				<li><b>Werte wirken „komisch“:</b> Skalierung, Datentyp (16/32 Bit, mit/ohne Vorzeichen) oder Wortfolge stimmen nicht –
+					in „Register erforschen“ die Details des Registers ansehen.</li>
 			</ul>
 
 			<h3>Sicherheit</h3>
-			<p>Die Anwendung ist erreichbar <b>nur auf diesem PC</b> (127.0.0.1) und nutzt <b>ausschließlich Lesebefehle</b>.
-			Es können <b>keine</b> Geräteeinstellungen verändert werden.</p>
+			<p>Die Anwendung ist <b>nur auf diesem PC</b> erreichbar (127.0.0.1) und nutzt <b>ausschließlich Lesebefehle</b>.
+			Geräteeinstellungen können <b>nicht</b> verändert werden.</p>
 		</div>
 
 		<div class="modal__foot">
-			<button class="btn btn--ghost" id="btnClearStorage" title="Entfernt z.B. die gemerkten IP-Adressen – zum Testen des Neu-Nutzer-Zustands">LocalStorage löschen</button>
+			<button class="btn btn--ghost" id="btnClearStorage" title="Gemerkte IP-Adressen, Verbindungen, Beobachtungsliste und Profil-Entwurf löschen – zeigt die App wie beim ersten Start">LocalStorage löschen</button>
 			<button class="btn btn--primary" id="helpClose2">Verstanden</button>
 		</div>
 	</div>

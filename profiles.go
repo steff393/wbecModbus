@@ -27,9 +27,12 @@ type RegisterDef struct {
 	Name    string  `json:"name"`
 	Type    string  `json:"type"`   // uint16 | int16 | uint32 | int32 | float32
 	Endian  string  `json:"endian"` // big | little (word order for 32-bit types)
-	Scale   float64 `json:"scale"`  // physical = raw * scale + offset
-	Offset  float64 `json:"offset"` // physical = raw * scale + offset
+	Scale   float64 `json:"scale"`  // physical = raw * scale * 10^SF + offset
+	Offset  float64 `json:"offset"` // physical = raw * scale * 10^SF + offset
 	Unit    string  `json:"unit"`
+	// ScaleRegister optionally names an int16 register holding a SunSpec scale factor
+	// SF (physical = raw * scale * 10^SF + offset). Nil means SF = 0.
+	ScaleRegister *uint16 `json:"scaleRegister,omitempty"`
 }
 
 // Profile bundles the connection settings and known registers of one device.
@@ -74,12 +77,28 @@ func ensureProfilesDir(baseDir string, profileFS fs.FS) error {
 		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(targetPath, data, 0o644); err != nil {
+		if err := os.WriteFile(targetPath, withoutIP(data), 0o644); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// withoutIP blanks the device IP of a shipped profile: the delivered state must not
+// carry anyone's device address. The UI remembers the IP a user enters per profile
+// in the browser instead. Files that don't parse are copied unchanged.
+func withoutIP(data []byte) []byte {
+	var p Profile
+	if err := json.Unmarshal(data, &p); err != nil || p.IP == "" {
+		return data
+	}
+	p.IP = ""
+	clean, err := json.MarshalIndent(p, "", "  ")
+	if err != nil {
+		return data
+	}
+	return clean
 }
 
 // profileFileName turns a display name into a safe file name, preventing path

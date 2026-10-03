@@ -1,181 +1,106 @@
 # wbecModbus
 
-Eine lokale Hardware-Bridge, die einen Browser mit **Modbus-TCP-Geräten** verbindet – z.B.
-um einen Wechselrichter auszulesen, ohne zusätzliche Software installieren zu müssen.
+**Prüfe in wenigen Minuten, ob [wbec](https://github.com/steff393/wbec) deinen Wechselrichter auslesen kann – ganz ohne Installation.**
 
-Die Anwendung besteht aus einer kleinen portablen `wbecModbus.exe`, die
+wbecModbus ist ein kleines Windows-Programm, das Werte deines Wechselrichters (oder Stromzählers) per
+Modbus TCP ausliest und im Browser anzeigt. Es **liest nur** – am Gerät wird nichts verändert.
 
-1. eine lokale HTTP-API bereitstellt,
-2. die Weboberfläche ausliefert (in die EXE eingebettet) und
-3. per Modbus TCP mit dem Gerät kommuniziert.
+![Übersicht](docs/screenshots/uebersicht.png)
 
-```
-Browser  ──HTTP──►  127.0.0.1:8765 (wbecModbus.exe)  ──Modbus TCP──►  Wechselrichter
-```
+Es hilft dir bei drei Dingen:
 
-Die Bridge lauscht **ausschließlich auf `127.0.0.1:8765`** und ist damit nicht aus dem
-Netzwerk erreichbar. Die Anwendung ist bewusst **Read-Only** (nur FC03/FC04) – es können
-keine Geräteparameter verändert werden.
+| | Modus | Wann? |
+|---|---|---|
+| ✅ | **Gerät prüfen** | Dein Wechselrichter wird von wbec unterstützt und du willst sehen, ob die Werte ankommen. |
+| 🩺 | **Fehlersuche** | wbec zeigt keine oder falsche Werte – du willst wissen, woran es liegt. |
+| 🔍 | **Register erforschen** | Dein Wechselrichter wird noch nicht unterstützt – du willst herausfinden, wo seine Werte stehen. |
 
 ---
 
-## Build & Start
+## In 3 Schritten loslegen
 
-Voraussetzung: Go (siehe `go.mod`). Einzige Abhängigkeit: `github.com/goburrow/modbus`.
+### 1. Herunterladen und starten
 
-```sh
-go build          # erzeugt wbecModbus.exe (bzw. wbecmodbus unter Linux)
-go run .          # bauen + starten in einem Schritt
-go run . -dev     # Entwicklung: web/ wird von der Platte geladen (Datei ändern + Browser neu laden, kein Rebuild)
-```
+1. `wbecModbus.exe` unter **[Releases](../../releases)** herunterladen.
+2. Doppelklick auf die Datei. Es öffnet sich ein schwarzes Fenster – **bitte offen lassen**.
+3. Die Oberfläche öffnet sich automatisch im Browser. Falls nicht, im Browser
+   **<http://127.0.0.1:8765>** aufrufen (die Adresse steht auch im schwarzen Fenster).
 
-Nach dem Start im Browser öffnen: <http://127.0.0.1:8765>
+![Konsolenfenster](docs/screenshots/konsole.png)
 
-Die Weboberfläche ist per `//go:embed` in die EXE eingebettet – die fertige `wbecModbus.exe`
-ist somit eine **einzelne portable Datei**. Nur der `profiles/`-Ordner wird zur Laufzeit neben
-der EXE angelegt/gelesen.
+> **Windows-Warnung?** Beim ersten Start meldet Windows evtl. „Der Computer wurde durch Windows geschützt“.
+> Dann auf **Weitere Informationen → Trotzdem ausführen** klicken.
 
----
+### 2. Verbindung einstellen
 
-## Funktionen der Oberfläche
+Oben in der Verbindungsleiste:
 
-- **Verbindung** – IP, Port, Unit ID, Function Code (FC03 Holding / FC04 Input).
-- **Lesen** – einen Registerbereich (Start + Anzahl) lesen.
-- **Scan** – einen größeren Bereich in 125er-Blöcken mit 100 ms Pause abtasten.
-- **Registertabelle**
-  - **Hover** über eine Zeile zeigt einen Tooltip mit *allen* Interpretationen
-    (hex, binär, uint16, int16, ascii, uint32/int32 BE+LE, float BE+LE) – und, falls ein Profil
-    aktiv ist, dem interpretierten physikalischen Wert.
-  - **Klick** auf eine Zeile liest genau dieses Register neu und aktualisiert es (kurzes Highlight).
-  - **Checkbox** markiert ein Register für das **zyklische Lesen**.
-- **Zyklisch lesen (Watch)** – markierte Register werden im einstellbaren Intervall (ms) laufend
-  aktualisiert; Start/Stopp per Knopfdruck.
-- **Suche mit Toleranz** – sucht einen Wert über alle Interpretationen **und gängige Skalierungen**
-  (×1, ×0.1, ×0.01, ×0.001, ×10, ×100, ×1000) innerhalb einer einstellbaren Toleranz.
-  Beispiel: Suche nach `230` (Toleranz ±5) findet auch Register `2328`, weil `2328 × 0.1 = 232.8`
-  (also z.B. 232,8 V).
-- **Profile** – siehe unten.
-- **Hilfe** – der Knopf **„? Hilfe"** oben rechts öffnet eine vollständige Bedienanleitung in der
-  Oberfläche. Dieselbe Anleitung liegt als [`HILFE.md`](HILFE.md) zum Weitergeben/Ausdrucken bei.
+1. **Wechselrichter-Typ** wählen – denselben, den du auch in wbec einstellst.
+   Port, Unit-ID und Register-Typ werden automatisch übernommen.
+2. **IP-Adresse** deines Wechselrichters eintragen (steht z. B. in deinem Router).
+   Sie wird gemerkt – beim nächsten Mal reicht ein Klick ins Feld.
+
+![Verbindung](docs/screenshots/verbindung.png)
+
+### 3. Werte lesen
+
+Im Modus **Gerät prüfen** auf **▶ Werte lesen** klicken. Jeder Wert erscheint als Karte mit Einheit:
+
+![Gerät prüfen](docs/screenshots/geraet-pruefen.png)
+
+- **Grün:** Alle Werte gelesen – wbec sollte deinen Wechselrichter auslesen können.
+  Vergleiche die Werte am besten mit der App deines Herstellers.
+- **Gelb/Rot:** Etwas klappt nicht – ein Klick auf **Zur Fehlersuche** hilft weiter.
+
+Mit **Live** werden die Werte laufend aktualisiert; ein Klick auf eine Karte zeigt den Verlauf.
 
 ---
 
-## Geräteprofile
+## Es klappt nicht? → Fehlersuche
 
-Ein Profil bündelt Verbindungsdaten und bekannte Register eines Geräts. Profile werden von der
-Bridge als JSON-Dateien im Ordner `profiles/` **gelesen und geschrieben**.
+Im Modus **Fehlersuche** auf **▶ Diagnose starten** klicken. wbecModbus prüft Schritt für Schritt,
+wo es hakt – und sagt dir, was zu tun ist. Die richtige **Unit-ID** kann es sogar selbst suchen.
 
-- Profil im Dropdown wählen → Verbindungsfelder werden gefüllt.
-- **Profil lesen** → alle definierten Register werden ausgelesen und als **physikalische Werte**
-  angezeigt (Rohwert × Skalierung, mit Einheit).
-- **Neu / Bearbeiten** → Editor zum Anlegen/Ändern von Registern (Adresse, Name, Typ, Endianness,
-  Skalierung, Einheit). **Speichern** schreibt die JSON-Datei, **Löschen** entfernt sie.
+![Fehlersuche](docs/screenshots/fehlersuche.png)
 
-Beispiel `profiles/goodwe-et.json`:
+Die häufigsten Ursachen:
 
-```json
-{
-  "name": "Goodwe ET",
-  "ip": "192.168.178.63",
-  "port": 502,
-  "unit": 247,
-  "function": 3,
-  "registers": [
-    { "address": 37113, "name": "Wirkleistung gesamt", "type": "int32", "endian": "big", "scale": 1, "unit": "W" }
-  ]
-}
-```
-
-Feldbedeutung eines Registers:
-
-| Feld      | Werte                                             | Bedeutung                                  |
-|-----------|---------------------------------------------------|--------------------------------------------|
-| `address` | 0–65535                                            | Startadresse                               |
-| `type`    | `uint16`, `int16`, `uint32`, `int32`, `float32`   | 16-bit belegt 1, 32-bit belegt 2 Register  |
-| `endian`  | `big`, `little`                                    | Wortreihenfolge bei 32-bit-Typen           |
-| `scale`   | Zahl (z.B. `0.1`)                                 | `physikalisch = roh × scale`               |
-| `unit`    | Text (z.B. `W`, `V`)                              | Anzeigeeinheit                             |
-
-> Hinweis: Die im mitgelieferten Goodwe-Profil hinterlegten Adressen sind Beispiele und müssen
-> gegen die Modbus-Doku des konkreten Geräts geprüft werden.
+- **Modbus TCP ist im Wechselrichter nicht aktiviert** (Einstellung in der Hersteller-App, im Portal oder am Display).
+- **wbec ist gleichzeitig verbunden** – manche Geräte erlauben nur eine Verbindung. wbec kurz trennen.
+- **Falsche Unit-ID oder falscher Port** (SolarEdge z. B. meist Port 1502).
+- **Anderes Netz**, z. B. Gast-WLAN.
 
 ---
 
-## HTTP API
+## Hilfe bekommen
 
-Alle Fehler werden mit HTTP 200 und `{"success": false, "error": "..."}` gemeldet; Clients werten
-das `success`-Flag aus.
-
-### `GET /ping`
-```json
-{ "name": "wbecModbus", "version": "v0.1.0" }
-```
-
-### `POST /modbus/read`
-```json
-{ "ip": "192.168.178.63", "port": 502, "unit": 247, "function": 3, "start": 35000, "count": 20 }
-```
-Antwort:
-```json
-{ "success": true, "data": { "35000": 1234, "35001": 5678 } }
-```
-
-### `POST /modbus/scan`
-```json
-{ "ip": "192.168.178.63", "port": 502, "unit": 247, "function": 3, "from": 35000, "to": 36000 }
-```
-Blockgröße max. 125 Register, 100 ms Pause zwischen Requests, max. Spannweite 10000.
-
-### `GET /profiles`
-```json
-{ "success": true, "profiles": [ { "name": "Goodwe ET", "ip": "...", "registers": [ ... ] } ] }
-```
-
-### `POST /profiles/save`
-Nimmt ein vollständiges Profil-Objekt entgegen und schreibt es nach `profiles/<slug>.json`.
-
-### `POST /profiles/delete`
-```json
-{ "name": "Goodwe ET" }
-```
+Klicke auf **⧉ Bericht kopieren** (in „Gerät prüfen“ oder „Fehlersuche“) und füge den Text in deinen
+Forenbeitrag oder ein [GitHub-Issue](https://github.com/steff393/wbec/issues) ein. Er enthält alle
+Einstellungen, Werte und Fehlermeldungen, die zur Hilfe nötig sind.
 
 ---
 
-## Projektstruktur
+## Für Fortgeschrittene: neuen Wechselrichter erforschen
 
-```
-mb/
-├── main.go            # Flags, go:embed, Routing, Static-/Dev-Serving
-├── types.go           # Request/Response-Strukturen
-├── modbus.go          # Verbindung + Registerlesen (goburrow/modbus)
-├── handlers.go        # HTTP-Handler für read/scan
-├── profiles.go        # Profil-CRUD (Dateien) + Handler
-├── go.mod / go.sum
-├── profiles/          # Geräteprofile als JSON (zur Laufzeit gelesen/geschrieben)
-│   └── goodwe-et.json
-└── web/               # in die EXE eingebettet
-    ├── index.html
-    ├── style.css
-    └── js/
-        ├── interpret.js  # reine Wert-Interpretation
-        ├── api.js        # fetch-Wrapper
-        └── app.js        # UI-Logik/State
-```
+Wird dein Wechselrichter noch nicht unterstützt, kannst du im Modus **Register erforschen** selbst
+herausfinden, wo seine Werte stehen:
+
+1. **Bereich lesen**, z. B. die Register 35000–35199.
+2. **Bekannten Wert suchen**: die aktuelle Leistung aus der Hersteller-App eingeben – wbecModbus findet
+   passende Register, auch mit Skalierung (z. B. 2312 × 0,1 = 231,2 V).
+3. **Beobachten**: Treffer laufend lesen und als Diagramm verfolgen.
+4. **Profil bauen**: gefundene Register benennen, speichern und als JSON für die Umsetzung in wbec weitergeben.
+
+![Register erforschen](docs/screenshots/register-erforschen.png)
 
 ---
 
-## Sicherheit
+## Gut zu wissen
 
-- Bind ausschließlich auf `127.0.0.1` – nicht aus dem Netzwerk erreichbar.
-- Nur Lese-Function-Codes (FC03/FC04). **Kein** FC05/06/15/16 → keine Parameteränderung am Gerät.
-- Profilnamen werden beim Speichern zu sicheren Dateinamen normalisiert (kein Path-Traversal).
-
----
-
-## Entwicklungsentscheidungen
-
-- **Go statt Python:** einzelne EXE, keine Runtime-Abhängigkeit, einfache Verteilung.
-- **Browser statt Desktop-GUI:** einfache Erweiterbarkeit, keine GUI-Toolkits.
-- **Dumme Bridge, Logik im Frontend:** die Bridge liefert nur Rohregister (`uint16`), sämtliche
-  Interpretation, Suche und Darstellung passieren im Browser. Neue Anzeige-/Suchfunktionen brauchen
-  daher meist nur Änderungen unter `web/`.
+- **Sicher:** wbecModbus ist nur auf deinem PC erreichbar und sendet ausschließlich Lesebefehle –
+  Einstellungen am Wechselrichter können nicht verändert werden.
+- **Portabel:** keine Installation, eine einzige Datei. Gespeicherte Profile landen im Ordner `profiles`
+  neben der EXE.
+- **Beenden:** einfach das schwarze Fenster schließen.
+- **Ausführliche Anleitung:** [HILFE.md](HILFE.md) oder der Knopf **? Hilfe** oben rechts im Programm.
+- **Entwickler:** Aufbau, Build und HTTP-API stehen in [ENTWICKLUNG.md](ENTWICKLUNG.md).

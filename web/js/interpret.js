@@ -61,6 +61,51 @@ export function fmtFloat(n) {
 	return Number(n.toFixed(4)).toString();
 }
 
+// Every numeric reading of a register (and its successor for 32-bit types). The
+// explorer offers these for search, details and "ins Profil".
+export const INTERPRETATIONS = [
+	{ label: "uint16", type: "uint16", endian: "big" },
+	{ label: "int16", type: "int16", endian: "big" },
+	{ label: "uint32 BE", type: "uint32", endian: "big" },
+	{ label: "uint32 LE", type: "uint32", endian: "little" },
+	{ label: "int32 BE", type: "int32", endian: "big" },
+	{ label: "int32 LE", type: "int32", endian: "little" },
+	{ label: "float BE", type: "float32", endian: "big" },
+	{ label: "float LE", type: "float32", endian: "little" },
+];
+
+export function typeWidth(type) {
+	return type === "uint16" || type === "int16" ? 1 : 2;
+}
+
+// How many registers a definition consumes (2 for 32-bit types, else 1).
+export function defWidth(def) {
+	return typeWidth(def.type);
+}
+
+// "int16", "uint32", "float32 LE" …
+export function typeLabel(def) {
+	return def.type + (typeWidth(def.type) === 2 && def.endian === "little" ? " LE" : "");
+}
+
+// Unscaled value of `type` from word `a` (+ `b` for 32-bit), or null if a word is missing.
+export function rawValue(type, endian, a, b) {
+	if (a === undefined) return null;
+	const little = endian === "little";
+	switch (type) {
+		case "int16":
+			return toInt16(a);
+		case "uint32":
+			return b === undefined ? null : little ? toUint32LE(a, b) : toUint32BE(a, b);
+		case "int32":
+			return b === undefined ? null : little ? toInt32LE(a, b) : toInt32BE(a, b);
+		case "float32":
+			return b === undefined ? null : little ? toFloatLE(a, b) : toFloatBE(a, b);
+		default:
+			return a;
+	}
+}
+
 // Every interpretation of the register at `addr` (and its successor for 32-bit
 // types). Returns [{label, value}] for the tooltip.
 export function allInterpretations(addr, regs) {
@@ -89,43 +134,67 @@ export function allInterpretations(addr, regs) {
 	return rows;
 }
 
-// Decode one profile register definition to its physical value, or null when the
-// backing register(s) are not present in `regs`.
-export function interpretDef(def, regs) {
-	const a = regs[def.address];
-	if (a === undefined) return null;
-	const b = regs[def.address + 1];
-	const little = def.endian === "little";
-	const scale = Number.isFinite(Number(def.scale)) ? Number(def.scale) : 1;
-	const offset = Number.isFinite(Number(def.offset)) ? Number(def.offset) : 0;
-
-	let raw;
-	switch (def.type) {
-		case "uint16":
-			raw = a;
-			break;
-		case "int16":
-			raw = toInt16(a);
-			break;
-		case "uint32":
-			if (b === undefined) return null;
-			raw = little ? toUint32LE(a, b) : toUint32BE(a, b);
-			break;
-		case "int32":
-			if (b === undefined) return null;
-			raw = little ? toInt32LE(a, b) : toInt32BE(a, b);
-			break;
-		case "float32":
-			if (b === undefined) return null;
-			raw = little ? toFloatLE(a, b) : toFloatBE(a, b);
-			break;
-		default:
-			raw = a;
-	}
-	return raw * scale + offset;
+export function hasScaleRegister(def) {
+	return def.scaleRegister !== undefined && def.scaleRegister !== null && def.scaleRegister !== "";
 }
 
-// How many registers a definition consumes (2 for 32-bit types, else 1).
-export function defWidth(def) {
-	return def.type === "uint16" || def.type === "int16" ? 1 : 2;
+function numberOr(value, fallback) {
+	const n = Number(value);
+	return value !== "" && value !== null && value !== undefined && Number.isFinite(n) ? n : fallback;
+}
+
+// SunSpec and others mark "not implemented / not available" with these raw values.
+const NOT_AVAILABLE = { uint16: 0xffff, int16: -0x8000, uint32: 0xffffffff, int32: -0x80000000 };
+
+// Rough sanity ranges per unit — only to warn, never to hide a value.
+const UNIT_LIMITS = {
+	V: [-1500, 1500],
+	A: [-1000, 1000],
+	W: [-250000, 250000],
+	kW: [-250, 250],
+	VA: [-250000, 250000],
+	var: [-250000, 250000],
+	Hz: [0, 70],
+	"%": [0, 100],
+	"°C": [-50, 150],
+	Wh: [0, Infinity],
+	kWh: [0, Infinity],
+};
+
+// Warning text for a suspicious value, or null.
+export function plausibility(def, raw, value) {
+	if (NOT_AVAILABLE[def.type] === raw) return "Gerät meldet „nicht verfügbar“ (Kennwert für fehlende Daten)";
+	if (!Number.isFinite(value)) return "Kein gültiger Zahlenwert – Datentyp oder Wortreihenfolge prüfen";
+	const limit = UNIT_LIMITS[String(def.unit || "").trim()];
+	if (limit && (value < limit[0] || value > limit[1])) {
+		return `Wert wirkt unplausibel für ${def.unit} – Skalierung oder Datentyp prüfen`;
+	}
+	return null;
+}
+
+// Decode one profile register definition:
+// physical = raw * scale * 10^SF + offset, SF read from def.scaleRegister (SunSpec).
+// Returns { value, raw, sf, warning }; value is null when a needed register is missing
+// or the scale factor is marked "not available".
+export function evaluateDef(def, regs) {
+	const raw = rawValue(def.type, def.endian, regs[def.address], regs[def.address + 1]);
+	if (raw === null) return { value: null, raw: null, sf: null, warning: null };
+
+	let sf = null;
+	if (hasScaleRegister(def)) {
+		const word = regs[Number(def.scaleRegister)];
+		if (word === undefined) return { value: null, raw, sf: null, warning: null };
+		sf = toInt16(word);
+		if (sf === -0x8000) {
+			return { value: null, raw, sf, warning: "Skalierungsfaktor meldet „nicht verfügbar“ (0x8000)" };
+		}
+	}
+
+	const value = raw * numberOr(def.scale, 1) * Math.pow(10, sf ?? 0) + numberOr(def.offset, 0);
+	return { value, raw, sf, warning: plausibility(def, raw, value) };
+}
+
+// Physical value only (null when not computable) — used by the explorer tooltip.
+export function interpretDef(def, regs) {
+	return evaluateDef(def, regs).value;
 }

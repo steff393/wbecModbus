@@ -12,16 +12,8 @@
       "endian": "big",
       "scale": 1,
       "offset": 0,
-      "unit": ""
-    },
-    {
-      "address": 40091,
-      "name": "AC Real Power Scale Factor",
-      "type": "int16",
-      "endian": "big",
-      "scale": 1,
-      "offset": 0,
-      "unit": ""
+      "unit": "W",
+      "scaleRegister": 40091
     }
   ]
 }
