@@ -14,7 +14,7 @@ var webFS embed.FS
 
 const (
 	listenAddr = "127.0.0.1:8765"
-	version    = "0.1.0"
+	version    = "0.1.1"
 )
 
 func init() {

@@ -11,6 +11,7 @@
       "type": "int16",
       "endian": "big",
       "scale": 1,
+      "offset": 0,
       "unit": "W"
     },
     {
@@ -19,7 +20,17 @@
       "type": "uint16",
       "endian": "big",
       "scale": 0.1,
+      "offset": 0,
       "unit": "V"
+    },
+    {
+      "address": 35183,
+      "name": "P Battery1",
+      "type": "uint16",
+      "endian": "big",
+      "scale": 1,
+      "offset": 0,
+      "unit": "W"
     }
   ]
 }
